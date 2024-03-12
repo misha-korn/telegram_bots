@@ -162,8 +162,6 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
         text = f'{int(result[0])} {int(sokr[0])}/{int(sokr[1])}'
         await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
-def zpstkaya_func():
-    print()
 
 
 if __name__ == '__main__':
