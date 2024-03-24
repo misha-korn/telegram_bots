@@ -98,15 +98,15 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 second_lst = [second_number]
                 run = True
                 while run:
-                    first_number += first_number_copy
-                    second_number += second_number_copy
-                    first_lst.append(first_number)
-                    second_lst.append(second_number)
                     for symbol_f_nok in first_lst:
                         for symbol_s_nok in second_lst:
                             if symbol_f_nok == symbol_s_nok:
                                 min_nok = symbol_f_nok
                                 run = False
+                    first_number += first_number_copy
+                    second_number += second_number_copy
+                    first_lst.append(first_number)
+                    second_lst.append(second_number)
                 state[update.effective_user.id]['dia_stat'] = 0
                 await context.bot.send_message(chat_id=update.effective_chat.id, text=min_nok)
 
