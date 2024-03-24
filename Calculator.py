@@ -36,7 +36,6 @@ def sokrashenie(result_1, result_2, s):
     s -= 1
     return result_1, result_2, s
 
-#Асинхронная функция, которая запускается по команде /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [['/nod', '/nok', '/calc']]
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Выберите действие", reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True))#Выводит текст
@@ -65,7 +64,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
         else:
             new_numbers_nod = [int(numbers_nod[0]), int(numbers_nod[1])]
             max_nod = 0
-            if new_numbers_nod[0] >= 1000000000 or new_numbers_nod[1] >= 1000000000:
+            if new_numbers_nod[0] >= 1000000 or new_numbers_nod[1] >= 1000000:
                 await context.bot.send_message(chat_id=update.effective_chat.id,
                                                text='Введите 2 числа поменьше, чтобы не нагружать сервер')
                 await nod(update, context)
