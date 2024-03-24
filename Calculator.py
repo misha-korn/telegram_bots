@@ -69,7 +69,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                                                text='Введите 2 числа поменьше, чтобы не нагружать сервер')
                 await nod(update, context)
             else:
-                for i in range(1, max(new_numbers_nod) + 1):
+                for i in range(1, min(new_numbers_nod) + 1):
                     if new_numbers_nod[0] % i == 0 and new_numbers_nod[1] % i == 0:
                         max_nod = i
                 state[update.effective_user.id]['dia_stat'] = 0
