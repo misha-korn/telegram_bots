@@ -20,7 +20,6 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS users(
                                 about TEXT);''')
 conn.commit()
 
-# a,c = [5,10]
 NAME, PHOTO, ABOUT = range(1, 4)
 
 
@@ -49,7 +48,6 @@ async def skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def get_about(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     await context.bot.send_message(chat_id=update.effective_chat.id, text='Cпасибо за регистрацию!')
     cursor.execute(f'INSERT INTO users VALUES({update.effective_user.id}, {context.user_data["name"]},'
                    f' {context.user_data["photo"]},'
@@ -63,7 +61,6 @@ if __name__ == '__main__':
     application = ApplicationBuilder().token(config['token']).build()
 
     conv_hand = ConversationHandler(
-                        # Указываем как пользователь может попасть в conversation handler
                         entry_points=[CommandHandler('start', start)],
                         states={
                             NAME: [MessageHandler(filters.TEXT, get_name)],
