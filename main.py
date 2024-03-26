@@ -164,7 +164,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def test(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=update)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=update.effective_user.username)
 
 
 async def upper(update: Update, context: ContextTypes.DEFAULT_TYPE):

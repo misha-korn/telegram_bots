@@ -1,6 +1,8 @@
 import logging
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters, CallbackQueryHandler
+from config import config_3, config_4
+import sqlite3
 
 #Настраиваем интерфейс логирования
 logging.basicConfig(
@@ -8,6 +10,24 @@ logging.basicConfig(
     level=logging.INFO
 )
 state = {}
+
+conn = sqlite3.connect('calculator_db.sqlite3')
+cursor = conn.cursor()
+cursor.execute('''CREATE TABLE IF NOT EXISTS users(
+                                id INT PRIMARY KEY,
+                                name TEXT,
+                                last_result_calc_cel REAL,
+                                last_result_calc_chisl REAL,
+                                last_result_calc_znam REAL,
+                                last_first_number_calc_cel REAL,
+                                last_first_number_calc_chisl REAL,
+                                last_first_number_calc_znam REAL,
+                                last_second_number_calc_cel REAL,
+                                last_second_number_calc_chisl REAL,
+                                last_second_number_calc_znam REAL,
+                                last_action_calc TEXT);''')
+conn.commit()
+
 
 # def sokrashenie(result_1, result_2, s):
 #     print('я запустился')
@@ -145,6 +165,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
         first_num = state[update.effective_user.id]['first_num']
         second_num = state[update.effective_user.id]['second_num']
         state[update.effective_user.id]['action'] = update.effective_message.text
+        action = state[update.effective_user.id]['action']
         if first_num[0] >= 1000000000000000000000000000 or second_num[0] >= 1000000000000000000000000000:
             await context.bot.send_message(chat_id=update.effective_chat.id,
                                            text='Введите 2 числа поменьше, чтобы не нагружать сервер')
@@ -207,9 +228,65 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 else:
                     text = f'{int(result[0])} {int(sokr[0])}/{int(sokr[1])}'
                 await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+            # text_last_result_calc = (result[0], ' ', result[1], '/', result[2])
+            cursor.execute(f'SELECT id, name FROM users WHERE id = {update.effective_user.id}')
+            data = cursor.fetchone()
+            elements = [
+                result[0],
+                result[1],
+                result[2],
+                first_num[0],
+                first_num[1],
+                first_num[2],
+                second_num[0],
+                second_num[1],
+                second_num[2],
+                action,
+                update.effective_user.id,
+            ]
+
+            if data:
+                cursor.execute(
+                    """UPDATE users SET last_result_calc_cel = ?,
+                                last_result_calc_chisl = ?, 
+                                last_result_calc_znam = ?, 
+                                last_first_number_calc_cel = ?, 
+                                last_first_number_calc_chisl = ?, 
+                                last_first_number_calc_znam = ?, 
+                                last_second_number_calc_cel = ?, 
+                                last_second_number_calc_chisl = ?, 
+                                last_second_number_calc_znam = ?, 
+                                last_action_calc = ?
+                                WHERE id = ?
+                                """,
+                    elements,
+                )
+            else:
+                cursor.execute(
+                    f'INSERT INTO users VALUES({update.effective_user.id}, "{update.effective_user.username}", {result[0]}, {result[1]}, {result[2]}, '
+                    f'{first_num[0]}, {first_num[1]},{first_num[2]}, {second_num[0]}, {second_num[1]}, {second_num[2]},'
+                    f' "{action}")')
+            conn.commit()
+
+# cursor.execute('''CREATE TABLE IF NOT EXISTS users(
+#                                 id INT PRIMARY KEY,
+#                                 name TEXT,
+#                                 last_result_calc_cel REAL,
+#                                 last_result_calc_chisl REAL,
+#                                 last_result_calc_znam REAL,
+#                                 last_first_number_calc_cel REAL,
+#                                 last_first_number_calc_chisl REAL,
+#                                 last_first_number_calc_znam REAL,
+#                                 last_second_number_calc_cel REAL,
+#                                 last_second_number_calc_chisl REAL,
+#                                 last_second_number_calc_znam REAL,
+#                                 last_action_calc TEXT);''')
+
+# config_4['token'] calc
+# config_3['token'] test
 
 if __name__ == '__main__':
-    application = ApplicationBuilder().token('6995737865:AAFhAW8qSc7js31vm_lzAvAVd-DeK1ZsZ5E').build()
+    application = ApplicationBuilder().token(config_3['token']).build()
 
     start_handler = CommandHandler('start', start)
     application.add_handler(start_handler)
