@@ -286,7 +286,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
 # config_3['token'] test
 
 if __name__ == '__main__':
-    application = ApplicationBuilder().token(config_3['token']).build()
+    application = ApplicationBuilder().token(config_4['token']).build()
 
     start_handler = CommandHandler('start', start)
     application.add_handler(start_handler)
