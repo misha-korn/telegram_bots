@@ -1,4 +1,5 @@
 venv
 user_pic
 config.py
+__pycache__
 calculator_db.sqlite3
