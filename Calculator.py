@@ -43,15 +43,12 @@ conn.commit()
 
 
 def sokrashenie(result_1, result_2, s):
-    print('я запустил функцию')
     i = 2
-    while i <= (int(result_1) // 2):
-        print('делаю проверку номер ', i - 1, ' конечное число ', int(result_1) // 2 - 1)
+    while i <= (int(result_2) // 2):
         if result_2 % i == 0 and result_1 % i == 0:
             result_2 /= i
             result_1 /= i
             s += 2
-            print(result_1, result_2, i)
         i += 1
     s -= 1
     return result_1, result_2, s
@@ -132,15 +129,19 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if state[update.effective_user.id]['dia_stat'] == 1:
         lst = update.effective_message.text.split(' ')
         cel_1 = int(lst[0])
+        if update.effective_message.text[0] == '-':
+            first_plus = False
+        else:
+            first_plus = True
         print(lst)
         if len(lst) == 2:
             drob = lst[1].split('/')
             chisl_1 = int(drob[0])
             znamen_1 = int(drob[1])
-            state[update.effective_user.id]['first_num'] = [cel_1, chisl_1, znamen_1]
+            state[update.effective_user.id]['first_num'] = [cel_1, chisl_1, znamen_1, first_plus]
             # state[update.effective_user.id]['first_num'] = int(lst[0]) + int(drob[0]) * (1/int(drob[1]))
         if len(lst) == 1 or (len(lst) == 2 and int(lst[1].split('/')[1]) == 0):
-            state[update.effective_user.id]['first_num'] = [cel_1, 0, 1]
+            state[update.effective_user.id]['first_num'] = [cel_1, 0, 1, first_plus]
         print(update.effective_message.text)
         state[update.effective_user.id]['dia_stat'] = 2
         await context.bot.send_message(chat_id=update.effective_chat.id, text="Введите второе число ")
@@ -148,15 +149,19 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
     elif state[update.effective_user.id]['dia_stat'] == 2:
         lst_2 = update.effective_message.text.split(' ')
         cel_2 = int(lst_2[0])
+        if update.effective_message.text[0] == '-':
+            second_plus = False
+        else:
+            second_plus = True
         print(lst_2)
         if len(lst_2) == 2:
             drob = lst_2[1].split('/')
             chisl_2 = int(drob[0])
             znamen_2 = int(drob[1])
-            state[update.effective_user.id]['second_num'] = [cel_2, chisl_2, znamen_2]
+            state[update.effective_user.id]['second_num'] = [cel_2, chisl_2, znamen_2, second_plus]
             # state[update.effective_user.id]['second_num'] = int(lst[0]) + int(drob[0]) * (1 / int(drob[1]))
         if len(lst_2) == 1 or (len(lst_2) == 2 and int(lst_2[1].split('/')[1]) == 0):
-            state[update.effective_user.id]['second_num'] = [cel_2, 0, 1]
+            state[update.effective_user.id]['second_num'] = [cel_2, 0, 1, second_plus]
         print(update.effective_message.text)
         state[update.effective_user.id]['dia_stat'] = 3
         await context.bot.send_message(chat_id=update.effective_chat.id, text="Введите знак ")
@@ -175,37 +180,109 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
             print(first_num, second_num)
             result = 0
             if state[update.effective_user.id]['action'] == '+':
-                result = [first_num[0] + second_num[0],
-                          first_num[1] * second_num[2] + second_num[1] * first_num[2],
-                          first_num[2] * second_num[2]]
-                if result[1] >= result[2]:
-                    result[0] += result[1] // result[2]
-                    result[1] -= result[2] * (result[1] // result[2])
+                if first_num[0] < 0:
+                    first_num[0] *= -1
+                if second_num[0] < 0:
+                    second_num[0] *= -1
+                if first_num[3] and second_num[3]:
+                    result = [first_num[0] + second_num[0],
+                              first_num[1] * second_num[2] + second_num[1] * first_num[2],
+                              first_num[2] * second_num[2]]
+                    if result[1] >= result[2]:
+                        result[0] += result[1] // result[2]
+                        result[1] -= result[2] * (result[1] // result[2])
+                elif first_num[3]:
+                    result = [first_num[0] - second_num[0],
+                              first_num[1] * second_num[2] - second_num[1] * first_num[2],
+                              first_num[2] * second_num[2]]
+                    if result[1] < 0:
+                        result[0] -= (-result[1] // result[2]) + 1
+                        result[1] += result[2]
+                elif second_num[3]:
+                    result = [first_num[0] - second_num[0],
+                              first_num[1] * second_num[2] - second_num[1] * first_num[2],
+                              first_num[2] * second_num[2]]
+                    if result[1] < 0:
+                        result[0] -= (-result[1] // result[2]) + 1
+                        result[1] += result[2]
+                    result[0] *= -1
+                else:
+                    result = [first_num[0] + second_num[0],
+                              first_num[1] * second_num[2] + second_num[1] * first_num[2],
+                              first_num[2] * second_num[2]]
+                    if result[1] >= result[2]:
+                        result[0] += result[1] // result[2]
+                        result[1] -= result[2] * (result[1] // result[2])
+                    result[0] *= -1
+
 
             elif state[update.effective_user.id]['action'] == '-':
-                result = [first_num[0] - second_num[0],
-                          first_num[1] * second_num[2] - second_num[1] * first_num[2],
-                          first_num[2] * second_num[2]]
-                if result[1] < 0:
-                    result[0] -= (-result[1] // result[2]) + 1
-                    result[1] += result[2]
+                if first_num[0] < 0:
+                    first_num[0] *= -1
+                if second_num[0] < 0:
+                    second_num[0] *= -1
+                if first_num[3] and second_num[3]:
+                    result = [first_num[0] - second_num[0],
+                              first_num[1] * second_num[2] - second_num[1] * first_num[2],
+                              first_num[2] * second_num[2]]
+                    if result[1] < 0:
+                        result[0] -= (-result[1] // result[2]) + 1
+                        result[1] += result[2]
+                elif first_num[3]:
+                    result = [first_num[0] + second_num[0],
+                              first_num[1] * second_num[2] + second_num[1] * first_num[2],
+                              first_num[2] * second_num[2]]
+                    if result[1] >= result[2]:
+                        result[0] += result[1] // result[2]
+                        result[1] -= result[2] * (result[1] // result[2])
+                elif second_num[3]:
+                    result = [first_num[0] + second_num[0],
+                              first_num[1] * second_num[2] + second_num[1] * first_num[2],
+                              first_num[2] * second_num[2]]
+                    if result[1] >= result[2]:
+                        result[0] += result[1] // result[2]
+                        result[1] -= result[2] * (result[1] // result[2])
+                    result[0] *= -1
+                else:
+                    result = [first_num[0] - second_num[0],
+                              first_num[1] * second_num[2] - second_num[1] * first_num[2],
+                              first_num[2] * second_num[2]]
+                    if result[1] < 0:
+                        result[0] -= (-result[1] // result[2]) + 1
+                        result[1] += result[2]
+                    result[0] *= -1
 
             elif state[update.effective_user.id]['action'] == '*':
+                if first_num[0] < 0:
+                    first_num[0] *= -1
+                if second_num[0] < 0:
+                    second_num[0] *= -1
                 result = [0,
-                          (first_num[1]+first_num[0]*first_num[2])*(second_num[1]+second_num[0]*second_num[2]),
+                          (first_num[1] + first_num[0] * first_num[2]) * (
+                                      second_num[1] + second_num[0] * second_num[2]),
                           first_num[2] * second_num[2]]
                 if result[1] >= result[2]:
                     result[0] += result[1] // result[2]
                     result[1] -= result[2] * (result[1] // result[2])
+                if (first_num[3] and not second_num[3]) or (not first_num[3] and second_num[3]):
+                    result[0] *= -1
 
             elif state[update.effective_user.id]['action'] in ['/', ':']:
+                if first_num[0] < 0:
+                    first_num[0] *= -1
+                if second_num[0] < 0:
+                    second_num[0] *= -1
                 result = [0,
                           (first_num[1]+first_num[0]*first_num[2])*(second_num[2]),
                           (first_num[2]) * (second_num[1]+second_num[0]*second_num[2])]
                 if result[1] >= result[2]:
                     result[0] += result[1] // result[2]
                     result[1] -= result[2] * (result[1] // result[2])
-                print(result)
+                if (first_num[3] and not second_num[3]) or (not first_num[3] and second_num[3]):
+                    result[0] *= -1
+
+            print(result)
+
             if int(result[1]) // 2 >= 5000000:
                 text = f'Мы не можем сократить полученый нами результат, ' \
                        f'т.к числитель или знаменатель вводных чисел слишком большой.' \
@@ -213,7 +290,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 await context.bot.send_message(chat_id=update.effective_chat.id,
                                                text=text)
             else:
-                s = 1
+                s = 2
                 sokr = sokrashenie(result[1], result[2], s)
                 result[1] = sokr[0]
                 result[2] = sokr[1]

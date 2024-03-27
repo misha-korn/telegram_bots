@@ -205,28 +205,12 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
             print(first_num, second_num)
             result = 0
             if state[update.effective_user.id]['action'] == '+':
-                if first_num[3] and second_num[3]:
-                    result = [first_num[0] + second_num[0],
-                              first_num[1] * second_num[2] + second_num[1] * first_num[2],
-                              first_num[2] * second_num[2]]
-                elif first_num[3]:
-                    result = [first_num[0] - second_num[0],
-                              first_num[1] * second_num[2] - second_num[1] * first_num[2],
-                              first_num[2] * second_num[2]]
-                elif second_num[3]:
-                    result = [0,
-                              (first_num[0]*first_num[2]+first_num[1])*second_num[2] -
-                              (second_num[0]*second_num[2]+second_num[1])*first_num[2],
-                              first_num[2] * second_num[2]]
-                else:
-                    pass
+                result = [first_num[0] + second_num[0],
+                          first_num[1] * second_num[2] + second_num[1] * first_num[2],
+                          first_num[2] * second_num[2]]
                 if result[1] >= result[2]:
                     result[0] += result[1] // result[2]
                     result[1] -= result[2] * (result[1] // result[2])
-                if result[1] < 0:
-                    result[0] -= (-result[1] // result[2]) + 1
-                    result[1] += result[2]
-
 
             elif state[update.effective_user.id]['action'] == '-':
                 if first_plus and second_plus:

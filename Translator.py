@@ -13,7 +13,7 @@ logging.basicConfig(
     level=logging.INFO
 )
 state = {}
-languages = {'Английский': 'en', 'Немецкий': 'de', 'Русский': 'ru', 'Китайский': 'zh'}
+languages = {'Английский': 'en', 'Немецкий': 'de', 'Русский': 'ru', 'Китайский': 'zh-CN'}
 
 LANGUAGE_1, LANGUAGE_2, MESSAGE_TRANSLATE = range(1, 4)
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':
                         LANGUAGE_2: [MessageHandler(filters.TEXT, second_language)],
                         MESSAGE_TRANSLATE: [MessageHandler(filters.TEXT, message_translate)]
                     },
-                    fallbacks=[]
+                    fallbacks=[CommandHandler("start", start)]
     )
     application.add_handler(conv_hand)
 
