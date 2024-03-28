@@ -16,54 +16,67 @@ cursor = conn.cursor()
 cursor.execute('''CREATE TABLE IF NOT EXISTS users(
                                 id INT PRIMARY KEY,
                                 name TEXT,
+                                last_result_calc_action TEXT,
                                 last_result_calc_cel REAL,
                                 last_result_calc_chisl REAL,
                                 last_result_calc_znam REAL,
+                                last_first_number_calc_action TEXT,
                                 last_first_number_calc_cel REAL,
                                 last_first_number_calc_chisl REAL,
                                 last_first_number_calc_znam REAL,
+                                last_second_number_calc_action TEXT,
                                 last_second_number_calc_cel REAL,
                                 last_second_number_calc_chisl REAL,
                                 last_second_number_calc_znam REAL,
                                 last_action_calc TEXT);''')
 conn.commit()
 
+def checking_for_positivity(result):
+    if result[0] < 0:
+        result[0] *= -1
+    if result[1] < 0:
+        result[1] *= -1
+    return result
 
-# def sokrashenie(result_1, result_2, s):
-#     print('я запустился')
-#     for i in range(2, int(result_1) // 2 + 1):
-#         print('делаю проверку')
-#         if result_2 % i == 0 and result_1 % i == 0:
-#             result_2 /= i
-#             result_1 /= i
-#             s += 2
-#             print(result_1, result_2, i)
-#     s -= 1
-#     return result_1, result_2, s
+def bigger_smaller(first_num, second_num):
+    return (first_num[0] * first_num[2] + first_num[1]) * second_num[2] > \
+           (second_num[0] * second_num[2] + second_num[1]) * first_num[2]
 
+def subtraction(first_num, second_num):
+    result = [0,
+              (first_num[0] * first_num[2] + first_num[1]) * second_num[2] -
+              (second_num[0] * second_num[2] + second_num[1]) * first_num[2],
+              first_num[2] * second_num[2],
+              '']
+    print(result)
+    result = checking_for_positivity(result)
+    if result[1] >= result[2]:
+        result[0] += result[1] // result[2]
+        result[1] -= result[2] * (result[1] // result[2])
+    print(result)
+    return result
 
-# def bigger_smaller(cel_1, chisl_1, znam_1, cel_2, chisl_2, znam_2, znak):
-#     chisl_1 += (cel_1 * znam_1)
-#     chisl_2 += (cel_2 * znam_2)
-#     cel_1 = 0
-#     cel_2 = 0
-#     znam_1 *= znam_2
-#     znam_2 *= znam_1
-#     if chisl_1 >= chisl_2:
-#         return True
-#     else:
-#         return False
+def addition(first_num, second_num):
+    result = [0,
+              (first_num[0] * first_num[2] + first_num[1]) * second_num[2] +
+              (second_num[0] * second_num[2] + second_num[1]) * first_num[2],
+              first_num[2] * second_num[2],
+              '']
+    print(result)
+    result = checking_for_positivity(result)
+    if result[1] >= result[2]:
+        result[0] += result[1] // result[2]
+        result[1] -= result[2] * (result[1] // result[2])
+    print(result)
+    return result
 
 def sokrashenie(result_1, result_2, s):
-    print('я запустил функцию')
     i = 2
-    while i <= (int(result_1) // 2):
-        print('делаю проверку номер ', i - 1, ' конечное число ', int(result_1) // 2 - 1)
+    while i <= (int(result_2) // 2):
         if result_2 % i == 0 and result_1 % i == 0:
             result_2 /= i
             result_1 /= i
             s += 2
-            print(result_1, result_2, i)
         i += 1
     s -= 1
     return result_1, result_2, s
@@ -87,8 +100,6 @@ async def nok(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Введите 2 целых числа, чтобы я сказал вам их НОК")
 
 async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    first_plus = True
-    second_plus = True
     if state[update.effective_user.id]['dia_stat'] == 'nod_1':
         numbers_nod = update.effective_message.text.split(' ')
         if float(numbers_nod[0]) % 1 != 0 or float(numbers_nod[1]) % 1 != 0:
@@ -144,12 +155,12 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 await context.bot.send_message(chat_id=update.effective_chat.id, text=min_nok)
 
     if state[update.effective_user.id]['dia_stat'] == 1:
-        if update.effective_message.text[0] == '-':
-            first_plus = False
-        print(first_plus)
         lst = update.effective_message.text.split(' ')
         cel_1 = int(lst[0])
-        print(cel_1)
+        if update.effective_message.text[0] == '-':
+            first_plus = False
+        else:
+            first_plus = True
         print(lst)
         if len(lst) == 2:
             drob = lst[1].split('/')
@@ -158,17 +169,18 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
             state[update.effective_user.id]['first_num'] = [cel_1, chisl_1, znamen_1, first_plus]
             # state[update.effective_user.id]['first_num'] = int(lst[0]) + int(drob[0]) * (1/int(drob[1]))
         if len(lst) == 1 or (len(lst) == 2 and int(lst[1].split('/')[1]) == 0):
-            state[update.effective_user.id]['first_num'] = [cel_1, 0, 1]
+            state[update.effective_user.id]['first_num'] = [cel_1, 0, 1, first_plus]
         print(update.effective_message.text)
         state[update.effective_user.id]['dia_stat'] = 2
         await context.bot.send_message(chat_id=update.effective_chat.id, text="Введите второе число ")
 
     elif state[update.effective_user.id]['dia_stat'] == 2:
-        if update.effective_message.text[0] == '-':
-            second_plus = False
         lst_2 = update.effective_message.text.split(' ')
         cel_2 = int(lst_2[0])
-        print(cel_2)
+        if update.effective_message.text[0] == '-':
+            second_plus = False
+        else:
+            second_plus = True
         print(lst_2)
         if len(lst_2) == 2:
             drob = lst_2[1].split('/')
@@ -177,7 +189,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
             state[update.effective_user.id]['second_num'] = [cel_2, chisl_2, znamen_2, second_plus]
             # state[update.effective_user.id]['second_num'] = int(lst[0]) + int(drob[0]) * (1 / int(drob[1]))
         if len(lst_2) == 1 or (len(lst_2) == 2 and int(lst_2[1].split('/')[1]) == 0):
-            state[update.effective_user.id]['second_num'] = [cel_2, 0, 1]
+            state[update.effective_user.id]['second_num'] = [cel_2, 0, 1, second_plus]
         print(update.effective_message.text)
         state[update.effective_user.id]['dia_stat'] = 3
         await context.bot.send_message(chat_id=update.effective_chat.id, text="Введите знак ")
@@ -185,17 +197,8 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
     elif state[update.effective_user.id]['dia_stat'] == 3:
         first_num = state[update.effective_user.id]['first_num']
         second_num = state[update.effective_user.id]['second_num']
-        if first_num[0] < 0:
-            first_num[0] *= -1
-        if second_num[0] < 0:
-            second_num[0] *= -1
-        print(first_num, second_num)
         state[update.effective_user.id]['action'] = update.effective_message.text
         action = state[update.effective_user.id]['action']
-        # plus = bigger_smaller(first_num[0], first_num[1], first_num[2], second_num[0], second_num[1], second_num[2],
-        #                       action)
-        # print(plus)
-        #
         if first_num[0] >= 1000000000000000000000000000 or second_num[0] >= 1000000000000000000000000000:
             await context.bot.send_message(chat_id=update.effective_chat.id,
                                            text='Введите 2 числа поменьше, чтобы не нагружать сервер')
@@ -203,50 +206,75 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
         else:
             print(state[update.effective_user.id]['action'])
             print(first_num, second_num)
-            result = 0
+            result = []
+            if not first_num[3]:
+                first_num[0] *= -1
+            if not second_num[3]:
+                second_num[0] *= -1
             if state[update.effective_user.id]['action'] == '+':
-                result = [first_num[0] + second_num[0],
-                          first_num[1] * second_num[2] + second_num[1] * first_num[2],
-                          first_num[2] * second_num[2]]
+                if first_num[3] and second_num[3]:
+                    result = addition(first_num, second_num)
+                elif first_num[3]:
+                    result = subtraction(first_num, second_num)
+                elif second_num[3]:
+                    result = subtraction(first_num, second_num)
+                    result = checking_for_positivity(result)
+                    if bigger_smaller(first_num, second_num):
+                        result[3] = '-'
+                else:
+                    result = addition(first_num, second_num)
+                    result = checking_for_positivity(result)
+                    result[3] = '-'
+            elif state[update.effective_user.id]['action'] == '-':
+                if first_num[3] and second_num[3]:
+                    result = subtraction(first_num, second_num)
+                elif first_num[3]:
+                    result = addition(first_num, second_num)
+                elif second_num[3]:
+                    result = addition(first_num, second_num)
+                    result = checking_for_positivity(result)
+                    result[3] = '-'
+                else:
+                    result = subtraction(first_num, second_num)
+                    result = checking_for_positivity(result)
+                    if bigger_smaller(first_num, second_num):
+                        result[3] = '-'
+            elif state[update.effective_user.id]['action'] == '*':
+                result = [0,
+                          (first_num[1] + first_num[0] * first_num[2]) * (
+                                      second_num[1] + second_num[0] * second_num[2]),
+                          first_num[2] * second_num[2],
+                          '']
                 if result[1] >= result[2]:
                     result[0] += result[1] // result[2]
                     result[1] -= result[2] * (result[1] // result[2])
-
-            elif state[update.effective_user.id]['action'] == '-':
-                if first_plus and second_plus:
-                    result = [first_num[0] - second_num[0],
-                              first_num[1] * second_num[2] - second_num[1] * first_num[2],
-                              first_num[2] * second_num[2]]
-                    if result[1] < 0:
-                        result[0] -= (-result[1] // result[2]) + 1
-                        result[1] += result[2]
-
-            elif state[update.effective_user.id]['action'] == '*':
-                if first_plus and second_plus:
-                    result = [0,
-                              (first_num[1]+first_num[0]*first_num[2])*(second_num[1]+second_num[0]*second_num[2]),
-                              first_num[2] * second_num[2]]
-                    if result[1] >= result[2]:
-                        result[0] += result[1] // result[2]
-                        result[1] -= result[2] * (result[1] // result[2])
-
+                if (first_num[3] and not second_num[3]) or (not first_num[3] and second_num[3]):
+                    result[3] = '-'
             elif state[update.effective_user.id]['action'] in ['/', ':']:
-                if first_plus and second_plus:
-                    result = [0,
-                              (first_num[1]+first_num[0]*first_num[2])*(second_num[2]),
-                              (first_num[2]) * (second_num[1]+second_num[0]*second_num[2])]
-                    if result[1] >= result[2]:
-                        result[0] += result[1] // result[2]
-                        result[1] -= result[2] * (result[1] // result[2])
+                result = [0,
+                          (first_num[1]+first_num[0]*first_num[2])*(second_num[2]),
+                          (first_num[2]) * (second_num[1]+second_num[0]*second_num[2]),
+                          '']
+                if result[1] >= result[2]:
+                    result[0] += result[1] // result[2]
+                    result[1] -= result[2] * (result[1] // result[2])
+                if (first_num[3] and not second_num[3]) or (not first_num[3] and second_num[3]):
+                    result[3] = '-'
+
+            print(result)
+
+            if result[0] >= 0 and result[1] < 0:
+                result[1] *= -1
+                result[3] = '-'
 
             if int(result[1]) // 2 >= 5000000:
                 text = f'Мы не можем сократить полученый нами результат, ' \
                        f'т.к числитель или знаменатель вводных чисел слишком большой.' \
-                       f'Однако мы можем сказать вам не сокращенную дробь. {result[0]} {result[1]}/{result[2]}'
+                       f'Однако мы можем сказать вам не сокращенную дробь. {result[3]}{result[0]} {result[1]}/{result[2]}'
                 await context.bot.send_message(chat_id=update.effective_chat.id,
                                                text=text)
             else:
-                s = 1
+                s = 2
                 sokr = sokrashenie(result[1], result[2], s)
                 result[1] = sokr[0]
                 result[2] = sokr[1]
@@ -256,21 +284,35 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     result[1] = sokr[0]
                     result[2] = sokr[1]
                     s = sokr[2]
-                if int(sokr[0]) == 0 and int(sokr[1]) == 1:
-                    text = f'{int(result[0])}'
+                if int(sokr[0]) == 0:
+                    text = f'{result[3]}{result[0]}'
                 else:
-                    text = f'{int(result[0])} {int(sokr[0])}/{int(sokr[1])}'
+                    text = f'{result[3]}{result[0]} {int(sokr[0])}/{int(sokr[1])}'
                 await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
-            # text_last_result_calc = (result[0], ' ', result[1], '/', result[2])
+            if first_num[3]:
+                first_num_action = '+'
+            else:
+                first_num_action = '-'
+            if second_num[3]:
+                second_num_action = '+'
+            else:
+                second_num_action = '-'
+            if result[3] == '-':
+                result_action = '-'
+            else:
+                result_action = '+'
             cursor.execute(f'SELECT id, name FROM users WHERE id = {update.effective_user.id}')
             data = cursor.fetchone()
             elements = [
+                result_action,
                 result[0],
                 result[1],
                 result[2],
+                first_num_action,
                 first_num[0],
                 first_num[1],
                 first_num[2],
+                second_num_action,
                 second_num[0],
                 second_num[1],
                 second_num[2],
@@ -280,12 +322,15 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
             if data:
                 cursor.execute(
-                    """UPDATE users SET last_result_calc_cel = ?,
+                    """UPDATE users SET last_result_calc_action = ?,
+                                last_result_calc_cel = ?,
                                 last_result_calc_chisl = ?, 
                                 last_result_calc_znam = ?, 
+                                last_first_number_calc_action = ?,
                                 last_first_number_calc_cel = ?, 
                                 last_first_number_calc_chisl = ?, 
                                 last_first_number_calc_znam = ?, 
+                                last_second_number_calc_action = ?,
                                 last_second_number_calc_cel = ?, 
                                 last_second_number_calc_chisl = ?, 
                                 last_second_number_calc_znam = ?, 
@@ -296,20 +341,24 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 )
             else:
                 cursor.execute(
-                    f'INSERT INTO users VALUES({update.effective_user.id}, "{update.effective_user.username}", {result[0]}, {result[1]}, {result[2]}, '
-                    f'{first_num[0]}, {first_num[1]},{first_num[2]}, {second_num[0]}, {second_num[1]}, {second_num[2]},'
-                    f' "{action}")')
+                    f'INSERT INTO users VALUES({update.effective_user.id}, "{update.effective_user.username}", '
+                    f'"{result_action}",{result[0]}, {result[1]}, {result[2]}, "{first_num_action}", {first_num[0]},'
+                    f'{first_num[1]}, {first_num[2]}, "{second_num_action}", {second_num[0]}, {second_num[1]}, '
+                    f'{second_num[2]}, "{action}")')
             conn.commit()
 
 # cursor.execute('''CREATE TABLE IF NOT EXISTS users(
 #                                 id INT PRIMARY KEY,
 #                                 name TEXT,
+#                                 last_result_calc_action TEXT,
 #                                 last_result_calc_cel REAL,
 #                                 last_result_calc_chisl REAL,
 #                                 last_result_calc_znam REAL,
+#                                 last_first_number_calc_action TEXT,
 #                                 last_first_number_calc_cel REAL,
 #                                 last_first_number_calc_chisl REAL,
 #                                 last_first_number_calc_znam REAL,
+#                                 last_second_number_calc_action TEXT,
 #                                 last_second_number_calc_cel REAL,
 #                                 last_second_number_calc_chisl REAL,
 #                                 last_second_number_calc_znam REAL,
@@ -319,7 +368,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
 # config_3['token'] test
 
 if __name__ == '__main__':
-    application = ApplicationBuilder().token(config_3['token']).build()
+    application = ApplicationBuilder().token(config_4['token']).build()
 
     start_handler = CommandHandler('start', start)
     application.add_handler(start_handler)
