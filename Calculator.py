@@ -82,24 +82,72 @@ def sokrashenie(result_1, result_2, s):
     return result_1, result_2, s
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [['/nod', '/nok', '/calc']]
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="Выберите действие", reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True))#Выводит текст
+    keyboard = [['/nod', '/nok'], ['/sort', '/calc']]
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text="Выберите действие", reply_markup=ReplyKeyboardMarkup(keyboard,
+                                                                                              resize_keyboard=True,
+                                                                                              one_time_keyboard=True))
     state[update.effective_user.id] = {'dia_stat': 0}
 
+async def sort(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    state[update.effective_user.id]['dia_stat'] = 'sort_1'
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="Введите числа, чтобы я их отсортировал")
 
 async def calc(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state[update.effective_user.id]['dia_stat'] = 1
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="Введите первое число, если число дробное, то дробную часть отделите от целой пробелом, при её записи используте /. Вот пример записи 5 5/6 или 0 2/7")
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text="Введите первое число, если число дробное, то дробную часть отделите от целой пробелом, при её записи используте /. Вот пример записи 5 5/6 или 0 2/7")
 
 async def nod(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state[update.effective_user.id]['dia_stat'] = 'nod_1'
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="Введите 2 целых числа, чтобы я сказал вам их НОД")
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text="Введите 2 целых числа, чтобы я сказал вам их НОД")
 
 async def nok(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state[update.effective_user.id]['dia_stat'] = 'nok_1'
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="Введите 2 целых числа, чтобы я сказал вам их НОК")
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text="Введите 2 целых числа, чтобы я сказал вам их НОК")
 
 async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if state[update.effective_user.id]['dia_stat'] == 'sort_1':
+        keyboard = [['по возрастанию', 'по убыванию']]
+        state[update.effective_user.id]['numbers_sort'] = update.effective_message.text.split(' ')
+        state[update.effective_user.id]['dia_stat'] = 'sort_2'
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Как нужно отсортировать?",
+                                       reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True,
+                                                                        one_time_keyboard=True))
+    elif state[update.effective_user.id]['dia_stat'] == 'sort_2':
+        state[update.effective_user.id]['how_sort'] = update.effective_message.text
+        state[update.effective_user.id]['dia_stat'] = 'sort_0'
+        how_sort = state[update.effective_user.id]['how_sort']
+        new_numbers_sort = []
+        new_numbers_sort_str = []
+        old_numbers_sort = [state[update.effective_user.id]['numbers_sort']]
+        for symbol in old_numbers_sort[0]:
+            if float(symbol) % 1 == 0:
+                symbol = int(symbol)
+            else:
+                symbol = float(symbol)
+            new_numbers_sort.append(symbol)
+        print(new_numbers_sort, how_sort)
+        for i in range(len(new_numbers_sort)-1):
+            for j in range(len(new_numbers_sort) - 1):
+                first_num_sort = new_numbers_sort[j]
+                second_num_sort = new_numbers_sort[j+1]
+                if how_sort == 'по убыванию':
+                    if second_num_sort > first_num_sort:
+                        new_numbers_sort[j] = second_num_sort
+                        new_numbers_sort[j + 1] = first_num_sort
+                elif how_sort == 'по возрастанию':
+                    if second_num_sort < first_num_sort:
+                        new_numbers_sort[j] = second_num_sort
+                        new_numbers_sort[j + 1] = first_num_sort
+        for symbol in new_numbers_sort:
+            symbol = str(symbol)
+            new_numbers_sort_str.append(symbol)
+        text = ' '.join(new_numbers_sort_str)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+
     if state[update.effective_user.id]['dia_stat'] == 'nod_1':
         numbers_nod = update.effective_message.text.split(' ')
         if float(numbers_nod[0]) % 1 != 0 or float(numbers_nod[1]) % 1 != 0:
@@ -381,6 +429,9 @@ if __name__ == '__main__':
 
     nok_handler = CommandHandler('nok', nok)
     application.add_handler(nok_handler)
+
+    sort_handler = CommandHandler('sort', sort)
+    application.add_handler(sort_handler)
 
     message_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), message_processing)
     application.add_handler(message_handler)
