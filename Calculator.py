@@ -264,27 +264,27 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     result = addition(first_num, second_num)
                 elif first_num[3]:
                     result = subtraction(first_num, second_num)
+                    if not bigger_smaller(first_num, second_num):
+                        result[3] = '-'
                 elif second_num[3]:
                     result = subtraction(first_num, second_num)
-                    result = checking_for_positivity(result)
                     if bigger_smaller(first_num, second_num):
                         result[3] = '-'
                 else:
                     result = addition(first_num, second_num)
-                    result = checking_for_positivity(result)
                     result[3] = '-'
             elif state[update.effective_user.id]['action'] == '-':
                 if first_num[3] and second_num[3]:
                     result = subtraction(first_num, second_num)
+                    if not bigger_smaller(first_num, second_num):
+                        result[3] = '-'
                 elif first_num[3]:
                     result = addition(first_num, second_num)
                 elif second_num[3]:
                     result = addition(first_num, second_num)
-                    result = checking_for_positivity(result)
                     result[3] = '-'
                 else:
                     result = subtraction(first_num, second_num)
-                    result = checking_for_positivity(result)
                     if bigger_smaller(first_num, second_num):
                         result[3] = '-'
             elif state[update.effective_user.id]['action'] == '*':
