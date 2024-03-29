@@ -43,6 +43,8 @@ def bigger_smaller(first_num, second_num):
            (second_num[0] * second_num[2] + second_num[1]) * first_num[2]
 
 def subtraction(first_num, second_num):
+    first_num = checking_for_positivity(first_num)
+    second_num = checking_for_positivity(second_num)
     result = [0,
               (first_num[0] * first_num[2] + first_num[1]) * second_num[2] -
               (second_num[0] * second_num[2] + second_num[1]) * first_num[2],
@@ -55,6 +57,8 @@ def subtraction(first_num, second_num):
     return result
 
 def addition(first_num, second_num):
+    first_num = checking_for_positivity(first_num)
+    second_num = checking_for_positivity(second_num)
     result = [0,
               (first_num[0] * first_num[2] + first_num[1]) * second_num[2] +
               (second_num[0] * second_num[2] + second_num[1]) * first_num[2],
@@ -201,49 +205,75 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
         # Ввод
         lst = update.effective_message.text.split(' ')
         print(lst)
-        cel_1 = int(lst[0])
+        # cel_1 = int(lst[0])
         if lst[0][0] == '-':
             first_plus = False
         else:
             first_plus = True
+        # Если first_num 2 значный
         if lst[1] not in ['+', '-', '*', '/', ':']:
             drob = lst[1].split('/')
             chisl_1 = int(drob[0])
             znamen_1 = int(drob[1])
-            state[update.effective_user.id]['first_num'] = [cel_1, chisl_1, znamen_1, first_plus]
+            state[update.effective_user.id]['first_num'] = [int(lst[0]), chisl_1, znamen_1, first_plus]
             state[update.effective_user.id]['action'] = lst[2]
             action = state[update.effective_user.id]['action']
-            cel_2 = int(lst[3])
+            # cel_2 = int(lst[3])
             if lst[3][0] == '-':
                 second_plus = False
             else:
                 second_plus = True
+            # Если second_num 2 значный
             if len(lst) == 5:
                 drob = lst[4].split('/')
                 chisl_2 = int(drob[0])
                 znamen_2 = int(drob[1])
-                state[update.effective_user.id]['second_num'] = [cel_2, chisl_2, znamen_2, second_plus]
-            if len(lst) == 4 or (len(lst) == 5 and (int(lst[4].split('/')[1]) == 0 or int(lst[4].split('/')[0]) == 0)):
-                state[update.effective_user.id]['second_num'] = [cel_2, 0, 1, second_plus]
+                state[update.effective_user.id]['second_num'] = [int(lst[3]), chisl_2, znamen_2, second_plus]
+            # Если second_num 1 значный и целый или 2 значный но с 0 в znam или chisl
+            if (len(lst) == 4 and len(lst[3].split('/')) == 1) \
+                    or (len(lst) == 5 and (int(lst[4].split('/')[1]) == 0 or int(lst[4].split('/')[0]) == 0)):
+                state[update.effective_user.id]['second_num'] = [int(lst[3]), 0, 1, second_plus]
+            # Если second_num 1 значный и дробный
+            elif len(lst) == 4 and len(lst[3].split('/')) == 2:
+                drob = lst[3].split('/')
+                chisl_2 = int(drob[0])
+                znamen_2 = int(drob[1])
+                state[update.effective_user.id]['second_num'] = [0, chisl_2, znamen_2, second_plus]
+        # Если first_num 1 значный
         else:
             state[update.effective_user.id]['action'] = lst[1]
             action = state[update.effective_user.id]['action']
-            cel_2 = int(lst[2])
+            # cel_2 = int(lst[2])
             if lst[2][0] == '-':
                 second_plus = False
             else:
                 second_plus = True
+            # Если second_num 2 значный
             if len(lst) == 4:
                 drob = lst[3].split('/')
                 chisl_2 = int(drob[0])
                 znamen_2 = int(drob[1])
-                state[update.effective_user.id]['second_num'] = [cel_2, chisl_2, znamen_2, second_plus]
-            if len(lst) == 3 or (len(lst) == 4 and (int(lst[3].split('/')[1]) == 0 or int(lst[3].split('/')[0]) == 0)):
-                state[update.effective_user.id]['second_num'] = [cel_2, 0, 1, second_plus]
+                state[update.effective_user.id]['second_num'] = [int(lst[2]), chisl_2, znamen_2, second_plus]
+            # Если second_num 1 значный и целый или 2 значный но с 0 в znam или chisl
+            if (len(lst) == 3 and len(lst[2].split('/')) == 1)\
+                    or (len(lst) == 4 and (int(lst[3].split('/')[1]) == 0 or int(lst[3].split('/')[0]) == 0)):
+                state[update.effective_user.id]['second_num'] = [int(lst[2]), 0, 1, second_plus]
+            # Если second_num 1 значный и дробный
+            elif len(lst) == 3 and len(lst[2].split('/')) == 2:
+                drob = lst[2].split('/')
+                chisl_2 = int(drob[0])
+                znamen_2 = int(drob[1])
+                state[update.effective_user.id]['second_num'] = [0, chisl_2, znamen_2, second_plus]
 
-        if lst[1] in ['+', '-', '*', '/', ':'] or (lst[1] not in ['+', '-', '*', '/', ':'] and
-                                                   (int(lst[1].split('/')[1]) == 0 or int(lst[1].split('/')[0]) == 0)):
-            state[update.effective_user.id]['first_num'] = [cel_1, 0, 1, first_plus]
+        if (lst[1] in ['+', '-', '*', '/', ':'] and len(lst[0].split('/')) == 1) or \
+                (lst[1] not in ['+', '-', '*', '/', ':'] and
+                 (int(lst[1].split('/')[1]) == 0 or int(lst[1].split('/')[0]) == 0)):
+            state[update.effective_user.id]['first_num'] = [int(lst[0]), 0, 1, first_plus]
+        elif lst[1] in ['+', '-', '*', '/', ':'] and len(lst[0].split('/')) == 2:
+            drob = lst[0].split('/')
+            chisl_1 = int(drob[0])
+            znamen_1 = int(drob[1])
+            state[update.effective_user.id]['first_num'] = [0, chisl_1, znamen_1, first_plus]
 
         # Арифметические действия
         print(lst)
