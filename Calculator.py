@@ -48,12 +48,10 @@ def subtraction(first_num, second_num):
               (second_num[0] * second_num[2] + second_num[1]) * first_num[2],
               first_num[2] * second_num[2],
               '']
-    print(result)
     result = checking_for_positivity(result)
     if result[1] >= result[2]:
         result[0] += result[1] // result[2]
         result[1] -= result[2] * (result[1] // result[2])
-    print(result)
     return result
 
 def addition(first_num, second_num):
@@ -62,12 +60,10 @@ def addition(first_num, second_num):
               (second_num[0] * second_num[2] + second_num[1]) * first_num[2],
               first_num[2] * second_num[2],
               '']
-    print(result)
     result = checking_for_positivity(result)
     if result[1] >= result[2]:
         result[0] += result[1] // result[2]
         result[1] -= result[2] * (result[1] // result[2])
-    print(result)
     return result
 
 def sokrashenie(result_1, result_2, s):
@@ -96,7 +92,7 @@ async def sort(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def calc(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state[update.effective_user.id]['dia_stat'] = 1
     await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text="Введите первое число, если число дробное, то дробную часть отделите от целой пробелом, при её записи используте /. Вот пример записи 5 5/6 или 0 2/7")
+                                   text="Введите пример, если число дробное, то дробную часть отделите от целой пробелом, при её записи используте /. Вот пример записи 5 5/6 - 0 2/7")
 
 async def nod(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state[update.effective_user.id]['dia_stat'] = 'nod_1'
@@ -129,7 +125,6 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
             else:
                 symbol = float(symbol)
             new_numbers_sort.append(symbol)
-        print(new_numbers_sort, how_sort)
         for i in range(len(new_numbers_sort)-1):
             for j in range(len(new_numbers_sort) - 1):
                 first_num_sort = new_numbers_sort[j]
@@ -203,57 +198,65 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 await context.bot.send_message(chat_id=update.effective_chat.id, text=min_nok)
 
     if state[update.effective_user.id]['dia_stat'] == 1:
+        # Ввод
         lst = update.effective_message.text.split(' ')
+        print(lst)
         cel_1 = int(lst[0])
-        if update.effective_message.text[0] == '-':
+        if lst[0][0] == '-':
             first_plus = False
         else:
             first_plus = True
-        print(lst)
-        if len(lst) == 2:
+        if lst[1] not in ['+', '-', '*', '/', ':']:
             drob = lst[1].split('/')
             chisl_1 = int(drob[0])
             znamen_1 = int(drob[1])
             state[update.effective_user.id]['first_num'] = [cel_1, chisl_1, znamen_1, first_plus]
-            # state[update.effective_user.id]['first_num'] = int(lst[0]) + int(drob[0]) * (1/int(drob[1]))
-        if len(lst) == 1 or (len(lst) == 2 and int(lst[1].split('/')[1]) == 0):
-            state[update.effective_user.id]['first_num'] = [cel_1, 0, 1, first_plus]
-        print(update.effective_message.text)
-        state[update.effective_user.id]['dia_stat'] = 2
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="Введите второе число ")
-
-    elif state[update.effective_user.id]['dia_stat'] == 2:
-        lst_2 = update.effective_message.text.split(' ')
-        cel_2 = int(lst_2[0])
-        if update.effective_message.text[0] == '-':
-            second_plus = False
+            state[update.effective_user.id]['action'] = lst[2]
+            action = state[update.effective_user.id]['action']
+            cel_2 = int(lst[3])
+            if lst[3][0] == '-':
+                second_plus = False
+            else:
+                second_plus = True
+            if len(lst) == 5:
+                drob = lst[4].split('/')
+                chisl_2 = int(drob[0])
+                znamen_2 = int(drob[1])
+                state[update.effective_user.id]['second_num'] = [cel_2, chisl_2, znamen_2, second_plus]
+            if len(lst) == 4 or (len(lst) == 5 and (int(lst[4].split('/')[1]) == 0 or int(lst[4].split('/')[0]) == 0)):
+                state[update.effective_user.id]['second_num'] = [cel_2, 0, 1, second_plus]
         else:
-            second_plus = True
-        print(lst_2)
-        if len(lst_2) == 2:
-            drob = lst_2[1].split('/')
-            chisl_2 = int(drob[0])
-            znamen_2 = int(drob[1])
-            state[update.effective_user.id]['second_num'] = [cel_2, chisl_2, znamen_2, second_plus]
-            # state[update.effective_user.id]['second_num'] = int(lst[0]) + int(drob[0]) * (1 / int(drob[1]))
-        if len(lst_2) == 1 or (len(lst_2) == 2 and int(lst_2[1].split('/')[1]) == 0):
-            state[update.effective_user.id]['second_num'] = [cel_2, 0, 1, second_plus]
-        print(update.effective_message.text)
-        state[update.effective_user.id]['dia_stat'] = 3
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="Введите знак ")
+            state[update.effective_user.id]['action'] = lst[1]
+            action = state[update.effective_user.id]['action']
+            cel_2 = int(lst[2])
+            if lst[2][0] == '-':
+                second_plus = False
+            else:
+                second_plus = True
+            if len(lst) == 4:
+                drob = lst[3].split('/')
+                chisl_2 = int(drob[0])
+                znamen_2 = int(drob[1])
+                state[update.effective_user.id]['second_num'] = [cel_2, chisl_2, znamen_2, second_plus]
+            if len(lst) == 3 or (len(lst) == 4 and (int(lst[3].split('/')[1]) == 0 or int(lst[3].split('/')[0]) == 0)):
+                state[update.effective_user.id]['second_num'] = [cel_2, 0, 1, second_plus]
 
-    elif state[update.effective_user.id]['dia_stat'] == 3:
+        if lst[1] in ['+', '-', '*', '/', ':'] or (lst[1] not in ['+', '-', '*', '/', ':'] and
+                                                   (int(lst[1].split('/')[1]) == 0 or int(lst[1].split('/')[0]) == 0)):
+            state[update.effective_user.id]['first_num'] = [cel_1, 0, 1, first_plus]
+
+        # Арифметические действия
+        print(lst)
+        print(state[update.effective_user.id]['action'])
+        print(state[update.effective_user.id]['first_num'])
+        print(state[update.effective_user.id]['second_num'])
         first_num = state[update.effective_user.id]['first_num']
         second_num = state[update.effective_user.id]['second_num']
-        state[update.effective_user.id]['action'] = update.effective_message.text
-        action = state[update.effective_user.id]['action']
         if first_num[0] >= 1000000000000000000000000000 or second_num[0] >= 1000000000000000000000000000:
             await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text='Введите 2 числа поменьше, чтобы не нагружать сервер')
+                                           text='Введите пример с 2 числами поменьше, чтобы не нагружать сервер')
             await calc(update, context)
         else:
-            print(state[update.effective_user.id]['action'])
-            print(first_num, second_num)
             result = []
             if not first_num[3]:
                 first_num[0] *= -1
