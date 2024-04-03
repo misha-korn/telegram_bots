@@ -31,6 +31,66 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS users(
                                 last_action_calc TEXT);''')
 conn.commit()
 
+def arithmetic_operations(first_num, second_num, action):
+    result = []
+    if not first_num[3]:
+        first_num[0] *= -1
+    if not second_num[3]:
+        second_num[0] *= -1
+    if action == '+':
+        if first_num[3] and second_num[3]:
+            result = addition(first_num, second_num)
+        elif first_num[3]:
+            result = subtraction(first_num, second_num)
+            if not bigger_smaller(first_num, second_num):
+                result[3] = '-'
+        elif second_num[3]:
+            result = subtraction(first_num, second_num)
+            if bigger_smaller(first_num, second_num):
+                result[3] = '-'
+        else:
+            result = addition(first_num, second_num)
+            result[3] = '-'
+    elif action == '-':
+        if first_num[3] and second_num[3]:
+            result = subtraction(first_num, second_num)
+            if not bigger_smaller(first_num, second_num):
+                result[3] = '-'
+        elif first_num[3]:
+            result = addition(first_num, second_num)
+        elif second_num[3]:
+            result = addition(first_num, second_num)
+            result[3] = '-'
+        else:
+            result = subtraction(first_num, second_num)
+            if bigger_smaller(first_num, second_num):
+                result[3] = '-'
+    elif action == '*':
+        result = [0,
+                  (first_num[1] + first_num[0] * first_num[2]) * (
+                          second_num[1] + second_num[0] * second_num[2]),
+                  first_num[2] * second_num[2],
+                  '']
+        if result[1] >= result[2]:
+            result[0] += result[1] // result[2]
+            result[1] -= result[2] * (result[1] // result[2])
+        if (first_num[3] and not second_num[3]) or (not first_num[3] and second_num[3]):
+            result[3] = '-'
+    elif action in ['/', ':']:
+        result = [0,
+                  (first_num[1] + first_num[0] * first_num[2]) * (second_num[2]),
+                  (first_num[2]) * (second_num[1] + second_num[0] * second_num[2]),
+                  '']
+        if result[1] >= result[2]:
+            result[0] += result[1] // result[2]
+            result[1] -= result[2] * (result[1] // result[2])
+        if (first_num[3] and not second_num[3]) or (not first_num[3] and second_num[3]):
+            result[3] = '-'
+    return result
+
+def znam(num):
+    return len(num.split('/')) == 1
+
 def checking_for_positivity(result):
     if result[0] < 0:
         result[0] *= -1
@@ -39,6 +99,8 @@ def checking_for_positivity(result):
     return result
 
 def bigger_smaller(first_num, second_num):
+    first_num = checking_for_positivity(first_num)
+    second_num = checking_for_positivity(second_num)
     return (first_num[0] * first_num[2] + first_num[1]) * second_num[2] > \
            (second_num[0] * second_num[2] + second_num[1]) * first_num[2]
 
@@ -204,145 +266,98 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if state[update.effective_user.id]['dia_stat'] == 1:
         # Ввод
         lst = update.effective_message.text.split(' ')
-        print(lst)
-        # cel_1 = int(lst[0])
-        if lst[0][0] == '-':
-            first_plus = False
-        else:
-            first_plus = True
-        # Если first_num 2 значный
-        if lst[1] not in ['+', '-', '*', '/', ':']:
-            drob = lst[1].split('/')
-            chisl_1 = int(drob[0])
-            znamen_1 = int(drob[1])
-            state[update.effective_user.id]['first_num'] = [int(lst[0]), chisl_1, znamen_1, first_plus]
-            state[update.effective_user.id]['action'] = lst[2]
-            action = state[update.effective_user.id]['action']
-            # cel_2 = int(lst[3])
-            if lst[3][0] == '-':
-                second_plus = False
-            else:
-                second_plus = True
-            # Если second_num 2 значный
-            if len(lst) == 5:
-                drob = lst[4].split('/')
-                chisl_2 = int(drob[0])
-                znamen_2 = int(drob[1])
-                state[update.effective_user.id]['second_num'] = [int(lst[3]), chisl_2, znamen_2, second_plus]
-            # Если second_num 1 значный и целый или 2 значный но с 0 в znam или chisl
-            if (len(lst) == 4 and len(lst[3].split('/')) == 1) \
-                    or (len(lst) == 5 and (int(lst[4].split('/')[1]) == 0 or int(lst[4].split('/')[0]) == 0)):
-                state[update.effective_user.id]['second_num'] = [int(lst[3]), 0, 1, second_plus]
-            # Если second_num 1 значный и дробный
-            elif len(lst) == 4 and len(lst[3].split('/')) == 2:
-                drob = lst[3].split('/')
-                chisl_2 = int(drob[0])
-                znamen_2 = int(drob[1])
-                state[update.effective_user.id]['second_num'] = [0, chisl_2, znamen_2, second_plus]
-        # Если first_num 1 значный
-        else:
-            state[update.effective_user.id]['action'] = lst[1]
-            action = state[update.effective_user.id]['action']
-            # cel_2 = int(lst[2])
-            if lst[2][0] == '-':
-                second_plus = False
-            else:
-                second_plus = True
-            # Если second_num 2 значный
-            if len(lst) == 4:
-                drob = lst[3].split('/')
-                chisl_2 = int(drob[0])
-                znamen_2 = int(drob[1])
-                state[update.effective_user.id]['second_num'] = [int(lst[2]), chisl_2, znamen_2, second_plus]
-            # Если second_num 1 значный и целый или 2 значный но с 0 в znam или chisl
-            if (len(lst) == 3 and len(lst[2].split('/')) == 1)\
-                    or (len(lst) == 4 and (int(lst[3].split('/')[1]) == 0 or int(lst[3].split('/')[0]) == 0)):
-                state[update.effective_user.id]['second_num'] = [int(lst[2]), 0, 1, second_plus]
-            # Если second_num 1 значный и дробный
-            elif len(lst) == 3 and len(lst[2].split('/')) == 2:
-                drob = lst[2].split('/')
-                chisl_2 = int(drob[0])
-                znamen_2 = int(drob[1])
-                state[update.effective_user.id]['second_num'] = [0, chisl_2, znamen_2, second_plus]
+        state[update.effective_user.id]['count_numbers'] = (1 + lst.count('-') + lst.count('+') + lst.count('/') +
+                                                            lst.count(':') + lst.count('*'))
+        numbers_lst = []
+        for i in range(len(lst)):
+            if lst[i] not in ['+', '-', '/', ':', '*']:
+                numbers_lst.append(lst[i])
 
-        if (lst[1] in ['+', '-', '*', '/', ':'] and len(lst[0].split('/')) == 1) or \
-                (lst[1] not in ['+', '-', '*', '/', ':'] and
-                 (int(lst[1].split('/')[1]) == 0 or int(lst[1].split('/')[0]) == 0)):
-            state[update.effective_user.id]['first_num'] = [int(lst[0]), 0, 1, first_plus]
-        elif lst[1] in ['+', '-', '*', '/', ':'] and len(lst[0].split('/')) == 2:
-            drob = lst[0].split('/')
-            chisl_1 = int(drob[0])
-            znamen_1 = int(drob[1])
-            state[update.effective_user.id]['first_num'] = [0, chisl_1, znamen_1, first_plus]
+        actions_lst = []
+        for i in range(len(lst)):
+            if lst[i] in ['+', '-', '/', ':', '*']:
+                actions_lst.append(lst[i])
+            else:
+                actions_lst.append(None)
+
+        len_numbers = []
+        len_number = 0
+        for i in range(len(actions_lst)):
+            if actions_lst[i]:
+                len_numbers.append(len_number - 1)
+            else:
+                len_number += 1
+        len_numbers.append(len_number - 1)
+
+        int_numbers_lst = [[] for i in range(len(len_numbers))]
+        new_numbers_lst = [[] for i in range(len(len_numbers))]
+        calc_numbers_lst = [[] for i in range(len(len_numbers))]
+        calc_actions = []
+
+        run = True
+        o = 0
+        for i in range(len(len_numbers)):
+            run = True
+            while o < len(numbers_lst) and run:
+                new_numbers_lst[i].append(numbers_lst[o])
+                if o == len_numbers[i]:
+                    run = False
+                o += 1
+
+        for i in range(len(new_numbers_lst)):
+            for j in range(len(new_numbers_lst[i])):
+                if znam(new_numbers_lst[i][j]):
+                    int_numbers_lst[i].append(new_numbers_lst[i][j])
+                else:
+                    int_numbers_lst[i].append(new_numbers_lst[i][j].split('/')[0])
+                    int_numbers_lst[i].append(new_numbers_lst[i][j].split('/')[1])
+
+        for i in range(len(new_numbers_lst)):
+            if len(int_numbers_lst[i]) == 3:
+                calc_numbers_lst[i] = [int_numbers_lst[i][0], int_numbers_lst[i][1], int_numbers_lst[i][2], '']
+            elif len(int_numbers_lst[i]) == 1:
+                calc_numbers_lst[i] = [int_numbers_lst[i][0], '0', '1', '']
+            elif len(int_numbers_lst[i]) == 2:
+                calc_numbers_lst[i] = ['0', int_numbers_lst[i][0], int_numbers_lst[i][1], '']
+            if calc_numbers_lst[i][0][0] == '-' or calc_numbers_lst[i][1][0] == '-':
+                calc_numbers_lst[i][3] = False
+            else:
+                calc_numbers_lst[i][3] = True
+            calc_numbers_lst[i] = [int(calc_numbers_lst[i][0]), int(calc_numbers_lst[i][1]),
+                                   int(calc_numbers_lst[i][2]), calc_numbers_lst[i][3]]
+            calc_numbers_lst[i] = checking_for_positivity(calc_numbers_lst[i])
+
+        for i in range(len(actions_lst)):
+            if actions_lst[i]:
+                calc_actions.append(actions_lst[i])
+
+
+
 
         # Арифметические действия
-        print(lst)
-        print(state[update.effective_user.id]['action'])
-        print(state[update.effective_user.id]['first_num'])
-        print(state[update.effective_user.id]['second_num'])
-        first_num = state[update.effective_user.id]['first_num']
-        second_num = state[update.effective_user.id]['second_num']
-        if first_num[0] >= 1000000000000000000000000000 or second_num[0] >= 1000000000000000000000000000:
+        print(calc_numbers_lst)
+        print(calc_actions)
+        problem = False
+        for i in range(len(calc_numbers_lst)):
+            if calc_numbers_lst[i][0] >= 1000000000000000000000000000:
+                problem = True
+        if problem:
             await context.bot.send_message(chat_id=update.effective_chat.id,
                                            text='Введите пример с 2 числами поменьше, чтобы не нагружать сервер')
             await calc(update, context)
         else:
+            j = 0
             result = []
-            if not first_num[3]:
-                first_num[0] *= -1
-            if not second_num[3]:
-                second_num[0] *= -1
-            if state[update.effective_user.id]['action'] == '+':
-                if first_num[3] and second_num[3]:
-                    result = addition(first_num, second_num)
-                elif first_num[3]:
-                    result = subtraction(first_num, second_num)
-                    if not bigger_smaller(first_num, second_num):
-                        result[3] = '-'
-                elif second_num[3]:
-                    result = subtraction(first_num, second_num)
-                    if bigger_smaller(first_num, second_num):
-                        result[3] = '-'
+            first_num = calc_numbers_lst[0]
+            while j < len(calc_actions):
+                second_num = calc_numbers_lst[j + 1]
+                result = arithmetic_operations(first_num, second_num, calc_actions[j])
+                if result[3] == '-':
+                    first_num = [result[0], result[1], result[2], False]
                 else:
-                    result = addition(first_num, second_num)
-                    result[3] = '-'
-            elif state[update.effective_user.id]['action'] == '-':
-                if first_num[3] and second_num[3]:
-                    result = subtraction(first_num, second_num)
-                    if not bigger_smaller(first_num, second_num):
-                        result[3] = '-'
-                elif first_num[3]:
-                    result = addition(first_num, second_num)
-                elif second_num[3]:
-                    result = addition(first_num, second_num)
-                    result[3] = '-'
-                else:
-                    result = subtraction(first_num, second_num)
-                    if bigger_smaller(first_num, second_num):
-                        result[3] = '-'
-            elif state[update.effective_user.id]['action'] == '*':
-                result = [0,
-                          (first_num[1] + first_num[0] * first_num[2]) * (
-                                      second_num[1] + second_num[0] * second_num[2]),
-                          first_num[2] * second_num[2],
-                          '']
-                if result[1] >= result[2]:
-                    result[0] += result[1] // result[2]
-                    result[1] -= result[2] * (result[1] // result[2])
-                if (first_num[3] and not second_num[3]) or (not first_num[3] and second_num[3]):
-                    result[3] = '-'
-            elif state[update.effective_user.id]['action'] in ['/', ':']:
-                result = [0,
-                          (first_num[1]+first_num[0]*first_num[2])*(second_num[2]),
-                          (first_num[2]) * (second_num[1]+second_num[0]*second_num[2]),
-                          '']
-                if result[1] >= result[2]:
-                    result[0] += result[1] // result[2]
-                    result[1] -= result[2] * (result[1] // result[2])
-                if (first_num[3] and not second_num[3]) or (not first_num[3] and second_num[3]):
-                    result[3] = '-'
-
-            print(result)
+                    first_num = [result[0], result[1], result[2], True]
+                j += 1
+                print(result)
 
             if result[0] >= 0 and result[1] < 0:
                 result[1] *= -1
@@ -370,63 +385,63 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 else:
                     text = f'{result[3]}{result[0]} {int(sokr[0])}/{int(sokr[1])}'
                 await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
-            if first_num[3]:
-                first_num_action = '+'
-            else:
-                first_num_action = '-'
-            if second_num[3]:
-                second_num_action = '+'
-            else:
-                second_num_action = '-'
-            if result[3] == '-':
-                result_action = '-'
-            else:
-                result_action = '+'
-            cursor.execute(f'SELECT id, name FROM users WHERE id = {update.effective_user.id}')
-            data = cursor.fetchone()
-            elements = [
-                result_action,
-                result[0],
-                result[1],
-                result[2],
-                first_num_action,
-                first_num[0],
-                first_num[1],
-                first_num[2],
-                second_num_action,
-                second_num[0],
-                second_num[1],
-                second_num[2],
-                action,
-                update.effective_user.id,
-            ]
-
-            if data:
-                cursor.execute(
-                    """UPDATE users SET last_result_calc_action = ?,
-                                last_result_calc_cel = ?,
-                                last_result_calc_chisl = ?, 
-                                last_result_calc_znam = ?, 
-                                last_first_number_calc_action = ?,
-                                last_first_number_calc_cel = ?, 
-                                last_first_number_calc_chisl = ?, 
-                                last_first_number_calc_znam = ?, 
-                                last_second_number_calc_action = ?,
-                                last_second_number_calc_cel = ?, 
-                                last_second_number_calc_chisl = ?, 
-                                last_second_number_calc_znam = ?, 
-                                last_action_calc = ?
-                                WHERE id = ?
-                                """,
-                    elements,
-                )
-            else:
-                cursor.execute(
-                    f'INSERT INTO users VALUES({update.effective_user.id}, "{update.effective_user.username}", '
-                    f'"{result_action}",{result[0]}, {result[1]}, {result[2]}, "{first_num_action}", {first_num[0]},'
-                    f'{first_num[1]}, {first_num[2]}, "{second_num_action}", {second_num[0]}, {second_num[1]}, '
-                    f'{second_num[2]}, "{action}")')
-            conn.commit()
+            # if first_num[3]:
+            #     first_num_action = '+'
+            # else:
+            #     first_num_action = '-'
+            # if second_num[3]:
+            #     second_num_action = '+'
+            # else:
+            #     second_num_action = '-'
+            # if result[3] == '-':
+            #     result_action = '-'
+            # else:
+            #     result_action = '+'
+            # cursor.execute(f'SELECT id, name FROM users WHERE id = {update.effective_user.id}')
+            # data = cursor.fetchone()
+            # elements = [
+            #     result_action,
+            #     result[0],
+            #     result[1],
+            #     result[2],
+            #     first_num_action,
+            #     first_num[0],
+            #     first_num[1],
+            #     first_num[2],
+            #     second_num_action,
+            #     second_num[0],
+            #     second_num[1],
+            #     second_num[2],
+            #     action,
+            #     update.effective_user.id,
+            # ]
+            #
+            # if data:
+            #     cursor.execute(
+            #         """UPDATE users SET last_result_calc_action = ?,
+            #                     last_result_calc_cel = ?,
+            #                     last_result_calc_chisl = ?,
+            #                     last_result_calc_znam = ?,
+            #                     last_first_number_calc_action = ?,
+            #                     last_first_number_calc_cel = ?,
+            #                     last_first_number_calc_chisl = ?,
+            #                     last_first_number_calc_znam = ?,
+            #                     last_second_number_calc_action = ?,
+            #                     last_second_number_calc_cel = ?,
+            #                     last_second_number_calc_chisl = ?,
+            #                     last_second_number_calc_znam = ?,
+            #                     last_action_calc = ?
+            #                     WHERE id = ?
+            #                     """,
+            #         elements,
+            #     )
+            # else:
+            #     cursor.execute(
+            #         f'INSERT INTO users VALUES({update.effective_user.id}, "{update.effective_user.username}", '
+            #         f'"{result_action}",{result[0]}, {result[1]}, {result[2]}, "{first_num_action}", {first_num[0]},'
+            #         f'{first_num[1]}, {first_num[2]}, "{second_num_action}", {second_num[0]}, {second_num[1]}, '
+            #         f'{second_num[2]}, "{action}")')
+            # conn.commit()
 
 # cursor.execute('''CREATE TABLE IF NOT EXISTS users(
 #                                 id INT PRIMARY KEY,

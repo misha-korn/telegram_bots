@@ -30,7 +30,7 @@ async def call_back(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     valute_data = requests.get('https://www.cbr-xml-daily.ru/daily_json.js')
 
-    keyboard = [
+    keyboard_2 = [
         [
             # первая строчка кнопочек
             InlineKeyboardButton('USD', callback_data='USD'),
@@ -42,17 +42,17 @@ async def call_back(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # lst = [[1]]
     # lst[0]
     if query.data == "CNY":
-        keyboard[0].pop(1)
-        await query.edit_message_text(valute_data.json()['Valute']['CNY']['Value'], reply_markup=InlineKeyboardMarkup(keyboard))
+        keyboard_2[0].pop(1)
+        await query.edit_message_text(valute_data.json()['Valute']['CNY']['Value'], reply_markup=InlineKeyboardMarkup(keyboard_2))
     elif query.data == "USD":
-        keyboard[0].pop(0)
-        await query.edit_message_text(valute_data.json()['Valute']['USD']['Value'],reply_markup=InlineKeyboardMarkup(keyboard))
+        keyboard_2[0].pop(0)
+        await query.edit_message_text(valute_data.json()['Valute']['USD']['Value'],reply_markup=InlineKeyboardMarkup(keyboard_2))
     elif query.data == "AED":
-        keyboard[0].pop(2)
-        await query.edit_message_text(valute_data.json()['Valute']['AED']['Value'],reply_markup=InlineKeyboardMarkup(keyboard))
+        keyboard_2[0].pop(2)
+        await query.edit_message_text(valute_data.json()['Valute']['AED']['Value'],reply_markup=InlineKeyboardMarkup(keyboard_2))
     elif query.data == "BYN":
-        keyboard[0].pop(3)
-        await query.edit_message_text(valute_data.json()['Valute']['BYN']['Value'],reply_markup=InlineKeyboardMarkup(keyboard))
+        keyboard_2[0].pop(3)
+        await query.edit_message_text(valute_data.json()['Valute']['BYN']['Value'],reply_markup=InlineKeyboardMarkup(keyboard_2))
 
 async def dollar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [['EUR', 'CNY'], ['AED', 'BYN']]
