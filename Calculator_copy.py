@@ -143,6 +143,19 @@ def sokrashenie(result_1, result_2, s):
     s -= 1
     return result_1, result_2, s
 
+def sokrashenie_biggest(result_1, result_2):
+    s = 2
+    sokr = sokrashenie(result_1, result_2, s)
+    result_1 = sokr[0]
+    result_2 = sokr[1]
+    s = sokr[2]
+    while s > 1:
+        sokr = sokrashenie(result_1, result_2, s)
+        result_1 = sokr[0]
+        result_2 = sokr[1]
+        s = sokr[2]
+    return result_1, result_2, s
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [['/nod', '/nok'], ['/sort', '/calc']]
     await context.bot.send_message(chat_id=update.effective_chat.id,
@@ -356,6 +369,8 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     first_num = [result[0], result[1], result[2], False]
                 else:
                     first_num = [result[0], result[1], result[2], True]
+                sokr_biggest = sokrashenie_biggest(result[1], result[2])
+                result[1], result[2] = int(sokr_biggest[0]), int(sokr_biggest[1])
                 j += 1
                 print(result)
 
@@ -370,20 +385,12 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 await context.bot.send_message(chat_id=update.effective_chat.id,
                                                text=text)
             else:
-                s = 2
-                sokr = sokrashenie(result[1], result[2], s)
-                result[1] = sokr[0]
-                result[2] = sokr[1]
-                s = sokr[2]
-                while s > 1:
-                    sokr = sokrashenie(result[1], result[2], s)
-                    result[1] = sokr[0]
-                    result[2] = sokr[1]
-                    s = sokr[2]
-                if int(sokr[0]) == 0:
+                sokr_biggest = sokrashenie_biggest(result[1], result[2])
+                result[1], result[2] = sokr_biggest[0], sokr_biggest[1]
+                if int(result[1]) == 0:
                     text = f'{result[3]}{result[0]}'
                 else:
-                    text = f'{result[3]}{result[0]} {int(sokr[0])}/{int(sokr[1])}'
+                    text = f'{result[3]}{result[0]} {int(result[1])}/{int(result[2])}'
                 await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
             # if first_num[3]:
             #     first_num_action = '+'
