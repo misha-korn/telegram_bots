@@ -171,7 +171,7 @@ async def sort(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def calc(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state[update.effective_user.id]['dia_stat'] = 1
     await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text="Введите пример, если число дробное, то дробную часть отделите от целой пробелом, при её записи используте /. Вот пример записи 5 5/6 - 0 2/7")
+                                   text="Введите пример. Вот пример записи 5 5/6 - 0 2/7 + 1 3/7")
 
 async def nod(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state[update.effective_user.id]['dia_stat'] = 'nod_1'
@@ -305,6 +305,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
         int_numbers_lst = [[] for i in range(len(len_numbers))]
         new_numbers_lst = [[] for i in range(len(len_numbers))]
         calc_numbers_lst = [[] for i in range(len(len_numbers))]
+        calc_actions_div_multi = []
         calc_actions = []
 
         run = True
@@ -340,16 +341,20 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                                    int(calc_numbers_lst[i][2]), calc_numbers_lst[i][3]]
             calc_numbers_lst[i] = checking_for_positivity(calc_numbers_lst[i])
 
+        p = 0
         for i in range(len(actions_lst)):
             if actions_lst[i]:
                 calc_actions.append(actions_lst[i])
-
+                if actions_lst[i] in ['*', '/', ':']:
+                    calc_actions_div_multi.append(p)
+                p += 1
 
 
 
         # Арифметические действия
         print(calc_numbers_lst)
         print(calc_actions)
+        print(calc_actions_div_multi)
         problem = False
         for i in range(len(calc_numbers_lst)):
             if calc_numbers_lst[i][0] >= 1000000000000000000000000000:
@@ -359,6 +364,31 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                                            text='Введите пример с 2 числами поменьше, чтобы не нагружать сервер')
             await calc(update, context)
         else:
+            #Умножение и деление должно быть в приоритете
+            num_div_mult = 0
+            for i in range(len(calc_actions_div_multi)):
+                num_div_mult = arithmetic_operations(calc_numbers_lst[calc_actions_div_multi[i]],
+                                                     calc_numbers_lst[calc_actions_div_multi[i]+1],
+                                                     calc_actions[calc_actions_div_multi[i]])
+                calc_numbers_lst[calc_actions_div_multi[i]+1] = None
+                calc_actions[calc_actions_div_multi[i]] = None
+                if num_div_mult[3] == '-':
+                    calc_numbers_lst[calc_actions_div_multi[i]] = [num_div_mult[0], num_div_mult[1], num_div_mult[2],
+                                                                   False]
+                else:
+                    calc_numbers_lst[calc_actions_div_multi[i]] = [num_div_mult[0], num_div_mult[1], num_div_mult[2],
+                                                                   True]
+            calc_numbers_lst_copy = calc_numbers_lst.copy()
+            calc_actions_copy = calc_actions.copy()
+            calc_numbers_lst = []
+            calc_actions = []
+            for i in range(len(calc_numbers_lst_copy)):
+                if calc_numbers_lst_copy[i]:
+                    calc_numbers_lst.append(calc_numbers_lst_copy[i])
+            for i in range(len(calc_actions_copy)):
+                if calc_actions_copy[i]:
+                    calc_actions.append(calc_actions_copy[i])
+
             j = 0
             result = []
             first_num = calc_numbers_lst[0]
@@ -372,7 +402,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 sokr_biggest = sokrashenie_biggest(result[1], result[2])
                 result[1], result[2] = int(sokr_biggest[0]), int(sokr_biggest[1])
                 j += 1
-                print(result)
+
 
             if result[0] >= 0 and result[1] < 0:
                 result[1] *= -1
@@ -392,6 +422,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 else:
                     text = f'{result[3]}{result[0]} {int(result[1])}/{int(result[2])}'
                 await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+
             # if first_num[3]:
             #     first_num_action = '+'
             # else:
