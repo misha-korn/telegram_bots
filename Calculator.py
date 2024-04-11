@@ -35,18 +35,24 @@ def arifmetic_operations_div_mult(calc_actions_div_multi, calc_actions , calc_nu
     # Умножение и деление должно быть в приоритете
     num_div_mult = 0
     for i in range(len(calc_actions_div_multi)):
-        if calc_numbers_lst[calc_actions_div_multi[i]] and calc_numbers_lst[calc_actions_div_multi[i] + 1]:
-            num_div_mult = arithmetic_operations(calc_numbers_lst[calc_actions_div_multi[i]],
-                                                 calc_numbers_lst[calc_actions_div_multi[i] + 1],
-                                                 calc_actions[calc_actions_div_multi[i]])
-            calc_numbers_lst[calc_actions_div_multi[i] + 1] = None
-            calc_actions[calc_actions_div_multi[i]] = None
+        print(calc_numbers_lst)
+        print(calc_actions)
+        print()
+        if calc_numbers_lst[calc_actions_div_multi[-i-1]] and calc_numbers_lst[calc_actions_div_multi[-i-1] + 1]:
+            num_div_mult = arithmetic_operations(calc_numbers_lst[calc_actions_div_multi[-i-1] + 1],
+                                                 calc_numbers_lst[calc_actions_div_multi[-i-1]],
+                                                 calc_actions[calc_actions_div_multi[-i-1]])
+            calc_numbers_lst[calc_actions_div_multi[-i-1] + 1] = None
+            calc_actions[calc_actions_div_multi[-i-1]] = None
             if num_div_mult[3] == '-':
-                calc_numbers_lst[calc_actions_div_multi[i]] = [num_div_mult[0], num_div_mult[1], num_div_mult[2],
+                calc_numbers_lst[calc_actions_div_multi[-i-1]] = [num_div_mult[0], num_div_mult[1], num_div_mult[2],
                                                                False]
             else:
-                calc_numbers_lst[calc_actions_div_multi[i]] = [num_div_mult[0], num_div_mult[1], num_div_mult[2],
+                calc_numbers_lst[calc_actions_div_multi[-i-1]] = [num_div_mult[0], num_div_mult[1], num_div_mult[2],
                                                                True]
+        print(calc_numbers_lst)
+        print(calc_actions)
+        print()
     calc_numbers_lst_copy = calc_numbers_lst.copy()
     calc_actions_copy = calc_actions.copy()
     calc_numbers_lst = []
@@ -60,7 +66,7 @@ def arifmetic_operations_div_mult(calc_actions_div_multi, calc_actions , calc_nu
     # Все остальные арифметические действия
     j = 0
     first_num = calc_numbers_lst[0]
-    result = []
+    result = None
     while j < len(calc_actions):
         second_num = calc_numbers_lst[j + 1]
         result = arithmetic_operations(first_num, second_num, calc_actions[j])
