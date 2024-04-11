@@ -35,17 +35,18 @@ def arifmetic_operations_div_mult(calc_actions_div_multi, calc_actions , calc_nu
     # Умножение и деление должно быть в приоритете
     num_div_mult = 0
     for i in range(len(calc_actions_div_multi)):
-        num_div_mult = arithmetic_operations(calc_numbers_lst[calc_actions_div_multi[i]],
-                                             calc_numbers_lst[calc_actions_div_multi[i] + 1],
-                                             calc_actions[calc_actions_div_multi[i]])
-        calc_numbers_lst[calc_actions_div_multi[i] + 1] = None
-        calc_actions[calc_actions_div_multi[i]] = None
-        if num_div_mult[3] == '-':
-            calc_numbers_lst[calc_actions_div_multi[i]] = [num_div_mult[0], num_div_mult[1], num_div_mult[2],
-                                                           False]
-        else:
-            calc_numbers_lst[calc_actions_div_multi[i]] = [num_div_mult[0], num_div_mult[1], num_div_mult[2],
-                                                           True]
+        if calc_numbers_lst[calc_actions_div_multi[i]] and calc_numbers_lst[calc_actions_div_multi[i] + 1]:
+            num_div_mult = arithmetic_operations(calc_numbers_lst[calc_actions_div_multi[i]],
+                                                 calc_numbers_lst[calc_actions_div_multi[i] + 1],
+                                                 calc_actions[calc_actions_div_multi[i]])
+            calc_numbers_lst[calc_actions_div_multi[i] + 1] = None
+            calc_actions[calc_actions_div_multi[i]] = None
+            if num_div_mult[3] == '-':
+                calc_numbers_lst[calc_actions_div_multi[i]] = [num_div_mult[0], num_div_mult[1], num_div_mult[2],
+                                                               False]
+            else:
+                calc_numbers_lst[calc_actions_div_multi[i]] = [num_div_mult[0], num_div_mult[1], num_div_mult[2],
+                                                               True]
     calc_numbers_lst_copy = calc_numbers_lst.copy()
     calc_actions_copy = calc_actions.copy()
     calc_numbers_lst = []
