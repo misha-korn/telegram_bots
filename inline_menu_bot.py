@@ -4,6 +4,7 @@ from telegram.ext import (ApplicationBuilder, ContextTypes, CommandHandler, Call
                           ConversationHandler, PreCheckoutQueryHandler, filters)
 from config import config_3
 from templates import keyboard_start
+import json
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -12,7 +13,8 @@ logging.basicConfig(
 
 PAYMENT_PROVIDER_TOKEN = '381764678:TEST:82184'
 
-SCHEDULE, SIGN, SUBSCRIPTION, BUY, CHOOSE_ACTION, PREVIOUS, NEXT, DAY, BUY_ONE_MONTH = range(1, 10)
+BUY_ONE_WEEK, BUY_ONE_MONTH, BUY_ONE_YEAR, SCHEDULE, SIGN, SUBSCRIPTION, BUY, CHOOSE_ACTION, PREVIOUS, NEXT, DAY = (
+    range(0, 11))
 
 day_of_week = {1: 'Понедельник', 2: 'Вторник', 3: 'Среда', 4: 'Четверг', 5: 'Пятница', 6: 'Суббота', 7: 'Воскресенье'}
 
@@ -114,6 +116,10 @@ async def buy_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton('запись', callback_data=str(SIGN)),
         ], [
             InlineKeyboardButton('купить абонемент на месяц', callback_data=str(BUY_ONE_MONTH)),
+        ], [
+            InlineKeyboardButton('купить абонемент на неделю', callback_data=str(BUY_ONE_WEEK)),
+        ], [
+            InlineKeyboardButton('купить абонемент на год', callback_data=str(BUY_ONE_YEAR)),
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -126,25 +132,23 @@ async def start_without_shipping_callback(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> None:
     """Sends an invoice without shipping-payment."""
+    with open('payment_details.json') as file:
+        payment_info = json.loads(file.read())
+    print(payment_info)
     query = update.callback_query
     await query.answer()
     chat_id = update.effective_message.chat_id
-    title = "Payment Example"
-    description = "Payment Example using python-telegram-bot"
-    # select a payload just for you to recognize its the donation from your bot
+    # if query.data ==
+    title = payment_info[int(query.data)]['title']
+    description = payment_info[int(query.data)]['description']
     payload = "Custom-Payload"
-    # In order to get a provider_token see https://core.telegram.org/bots/payments#getting-a-token
     currency = "RUB"
-    # price in dollars
-    price = 100
-    # price * 100 so as to include 2 decimal points
+    price = payment_info[int(query.data)]['price']
     prices = [LabeledPrice("Test", price * 100)]
-
-    # optionally pass need_name=True, need_phone_number=True,
-    # need_email=True, need_shipping_address=True, is_flexible=True
     await context.bot.send_invoice(
         chat_id, title, description, payload, PAYMENT_PROVIDER_TOKEN, currency, prices
     )
+
 
 async def precheckout_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Answers the PreQecheckoutQuery"""
@@ -152,14 +156,14 @@ async def precheckout_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     # check the payload, is this from your bot?
     if query.invoice_payload != "Custom-Payload":
         # answer False pre_checkout_query
-        await query.answer(ok=False, error_message="Something went wrong...")
+        await query.answer(ok=False, error_message="Что-то пошло не так...")
     else:
         await query.answer(ok=True)
 
 async def successful_payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Confirms the successful payment."""
     # do something after successfully receiving payment?
-    await update.message.reply_text("Thank you for your payment!")
+    await update.message.reply_text("Спасибо за покупку!")
 
 
 if __name__ == '__main__':
@@ -193,7 +197,9 @@ if __name__ == '__main__':
                 CallbackQueryHandler(schedule_cb, pattern=f'^{SCHEDULE}$'),
                 CallbackQueryHandler(sign_cb, pattern=f'^{SIGN}$'),
                 CallbackQueryHandler(chooseact_cb, pattern=f'^{CHOOSE_ACTION}$'),
-                CallbackQueryHandler(start_without_shipping_callback, pattern=f'^{BUY_ONE_MONTH}$'),
+                CallbackQueryHandler(start_without_shipping_callback, pattern=f'^({BUY_ONE_MONTH}|'
+                                                                              f'{BUY_ONE_WEEK}|'
+                                                                              f'{BUY_ONE_YEAR})$'),
             ]
         },
         fallbacks=[]

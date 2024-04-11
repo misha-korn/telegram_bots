@@ -1,6 +1,7 @@
 from telegram import InlineKeyboardButton
 
-SCHEDULE, SIGN, SUBSCRIPTION, BUY, CHOOSE_ACTION = range(1, 6)
+BUY_ONE_WEEK, BUY_ONE_MONTH, BUY_ONE_YEAR, SCHEDULE, SIGN, SUBSCRIPTION, BUY, CHOOSE_ACTION, PREVIOUS, NEXT, DAY = (
+    range(0, 11))
 
 keyboard_start = [
         [
