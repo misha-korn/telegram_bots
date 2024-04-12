@@ -35,17 +35,17 @@ def arifmetic_operations_div_mult(calc_actions_div_multi, calc_actions , calc_nu
     # Умножение и деление должно быть в приоритете
     num_div_mult = 0
     for i in range(len(calc_actions_div_multi)):
-        if calc_numbers_lst[calc_actions_div_multi[i]] and calc_numbers_lst[calc_actions_div_multi[i] + 1]:
-            num_div_mult = arithmetic_operations(calc_numbers_lst[calc_actions_div_multi[i]],
-                                                 calc_numbers_lst[calc_actions_div_multi[i] + 1],
-                                                 calc_actions[calc_actions_div_multi[i]])
-            calc_numbers_lst[calc_actions_div_multi[i] + 1] = None
-            calc_actions[calc_actions_div_multi[i]] = None
+        if calc_numbers_lst[calc_actions_div_multi[-i-1]] and calc_numbers_lst[calc_actions_div_multi[-i-1] + 1]:
+            num_div_mult = arithmetic_operations(calc_numbers_lst[calc_actions_div_multi[-i-1] + 1],
+                                                 calc_numbers_lst[calc_actions_div_multi[-i-1]],
+                                                 calc_actions[calc_actions_div_multi[-i-1]])
+            calc_numbers_lst[calc_actions_div_multi[-i-1] + 1] = None
+            calc_actions[calc_actions_div_multi[-i-1]] = None
             if num_div_mult[3] == '-':
-                calc_numbers_lst[calc_actions_div_multi[i]] = [num_div_mult[0], num_div_mult[1], num_div_mult[2],
+                calc_numbers_lst[calc_actions_div_multi[-i-1]] = [num_div_mult[0], num_div_mult[1], num_div_mult[2],
                                                                False]
             else:
-                calc_numbers_lst[calc_actions_div_multi[i]] = [num_div_mult[0], num_div_mult[1], num_div_mult[2],
+                calc_numbers_lst[calc_actions_div_multi[-i-1]] = [num_div_mult[0], num_div_mult[1], num_div_mult[2],
                                                                True]
     calc_numbers_lst_copy = calc_numbers_lst.copy()
     calc_actions_copy = calc_actions.copy()
@@ -60,7 +60,7 @@ def arifmetic_operations_div_mult(calc_actions_div_multi, calc_actions , calc_nu
     # Все остальные арифметические действия
     j = 0
     first_num = calc_numbers_lst[0]
-    result = []
+    result = None
     while j < len(calc_actions):
         second_num = calc_numbers_lst[j + 1]
         result = arithmetic_operations(first_num, second_num, calc_actions[j])
@@ -476,7 +476,6 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
         # Арифметические действия
-        # print(calc_numbers_lst)
         # print(calc_numbers_brokes, 'calc_numbers_brokes')
         # print(calc_actions_brokes, 'calc_actions_brokes')
         # print(calc_index_brokes, 'calc_index_brokes')
@@ -516,6 +515,10 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
             calc_index_brokes.append(calc_index_brokes_the_last_element)
 
+            print(calc_numbers_brokes, 'calc_numbers_brokes')
+            print(calc_actions_brokes, 'calc_actions_brokes')
+            print(calc_index_brokes, 'calc_index_brokes')
+
             calc_numbers_brokes_results = []
             last_index_brokes = []
 
@@ -524,15 +527,21 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 replacement = 0
                 count_elements_vstr_many = []
                 number_replacement_many = []
+                index_replacement_many_f = []
+                index_replacement_many_s = []
 
                 for j in range(len(last_index_brokes)):#Считаем количество повторений в скобках
                     not_replacement = True
                     count_elements_vstr = 0
                     number_replacement = []
+                    index_replacement_f = []
+                    index_replacement_s = []
                     for q in range(len(last_index_brokes[j])):
                         if last_index_brokes[j][q] in calc_index_brokes[i]:
                             count_elements_vstr += 1#Количество повторов
                             number_replacement.append(calc_index_brokes[i].index(last_index_brokes[j][q]))#Индексы повторяющихся элементов
+                            index_replacement_f.append(j)
+                            index_replacement_s.append(calc_index_brokes[i].index(last_index_brokes[j][q]))
 
                     if count_elements_vstr == len(last_index_brokes[j]):
                         for q in range(len(last_index_brokes)):
@@ -543,22 +552,32 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                             replacement += 1#Количество повторений в скобках
                             count_elements_vstr_many.append(count_elements_vstr)#Список количеств повторов
                             number_replacement_many.append(number_replacement)#Список индексов повторяющихся элементов
+                            index_replacement_many_f.append(index_replacement_f)#Список индексов изначальных элементов
+                            index_replacement_many_s.append(index_replacement_s)#Список индексов заменяющих элементов
+                            print(last_index_brokes[j], calc_index_brokes[i], 'last_index_brokes[j], calc_index_brokes[i]')
+                print(replacement, 'replacement')
+                print(count_elements_vstr_many, 'count_elements_vstr_many')
+                print(index_replacement_many_f, 'index_replacement_many_f')
+                print(index_replacement_many_s, 'index_replacement_many_s')
 
                 for j in range(replacement):#Делаем замены
 
                     num_replace = 0#Номер замены
                     for q in range(count_elements_vstr_many[j]):
+                        print(calc_numbers_brokes)
+                        print(calc_actions_brokes)
                         if num_replace == 0:#Если замена 1, то он заменяет на результат нужной скобки
-                            calc_numbers_brokes[i][calc_index_brokes[i].index(number_replacement_many[j][q])] = (
-                                calc_numbers_brokes_results)[calc_index_brokes.index(number_replacement_many[j])]
+                            calc_numbers_brokes[i][index_replacement_many_s[j][q]] = (
+                                calc_numbers_brokes_results)[index_replacement_many_f[j][q]]
 
                         else:#Если замена не 1, то он заменяет на None
-                            calc_numbers_brokes[i][calc_index_brokes[i].index(number_replacement_many[j][q])] = None
+                            calc_numbers_brokes[i][index_replacement_many_s[j][q]] = None
                         num_replace += 1
+
 
                     # Настройка actions
                     for m in range(len(number_replacement_many[j]) - 1):#Количество заменяемых элементов - 1
-                        calc_actions_brokes[i][number_replacement_many[j][m]] = None
+                        calc_actions_brokes[i][index_replacement_many_s[j][m]] = None
 
 
                 new_calc_numbers_brokes = []#Отчистка от None чисел
@@ -573,6 +592,10 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     if calc_actions_brokes[i][m] != None:
                         new_calc_actions_brokes.append(calc_actions_brokes[i][m])
                 calc_actions_brokes[i] = new_calc_actions_brokes
+
+                print(calc_numbers_brokes)
+                print(calc_actions_brokes)
+                print(calc_numbers_brokes_results)
 
                 calc_actions_div_multi_broke = []#Создание calc_actions_div_multi_broke
                 p = 0
