@@ -530,6 +530,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 replacement = 0
                 count_elements_vstr_many = []
                 number_replacement_many = []
+                index_replacement = []
 
                 for j in range(len(last_index_brokes)):#Считаем количество повторений в скобках
                     not_replacement = True
@@ -549,17 +550,32 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                             replacement += 1#Количество повторений в скобках
                             count_elements_vstr_many.append(count_elements_vstr)#Список количеств повторов
                             number_replacement_many.append(number_replacement)#Список индексов повторяющихся элементов
+                            index_replacement.append([j, i])
+                            print(last_index_brokes, 'in', calc_index_brokes)
+                            print(last_index_brokes[j], 'in', calc_index_brokes[i])
+                            print(calc_numbers_brokes_results)
+                            print(j, 'in', i)
+                            print('j index result')
+                            print('i index calc_numbers_brokes')
 
                 for j in range(replacement):#Делаем замены
 
                     num_replace = 0#Номер замены
                     for q in range(count_elements_vstr_many[j]):
+                        index_replacement_for_num_replace = index_replacement[j][1]
                         if num_replace == 0:#Если замена 1, то он заменяет на результат нужной скобки
-                            calc_numbers_brokes[i][calc_index_brokes[i].index(number_replacement_many[j][q])] = (
-                                calc_numbers_brokes_results)[calc_index_brokes.index(number_replacement_many[j])]
+                            print(calc_numbers_brokes)
+                            print(calc_numbers_brokes[index_replacement[j][1]][calc_index_brokes[index_replacement_for_num_replace][q]])
+                            print(calc_numbers_brokes_results)
+                            print(calc_numbers_brokes_results[index_replacement[j][0]])
+                            print(calc_numbers_brokes_results)
+                            calc_numbers_brokes[index_replacement[j][1]][calc_index_brokes[index_replacement_for_num_replace][q]] \
+                                = calc_numbers_brokes_results[index_replacement[j][0]]
+                            # calc_numbers_brokes[i][calc_index_brokes[i].index(number_replacement_many[j][q])] = (
+                            #     calc_numbers_brokes_results)[calc_index_brokes.index(number_replacement_many[j])]
 
                         else:#Если замена не 1, то он заменяет на None
-                            calc_numbers_brokes[i][calc_index_brokes[i].index(number_replacement_many[j][q])] = None
+                            calc_numbers_brokes[index_replacement[j][1]][calc_index_brokes[index_replacement_for_num_replace][q]] = None
                         num_replace += 1
 
                     # Настройка actions
