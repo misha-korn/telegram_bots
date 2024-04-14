@@ -4,7 +4,7 @@ from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, Messa
 from config import config_3, config_4
 import sqlite3
 
-#Настраиваем интерфейс логирования
+# Настраиваем интерфейс логирования
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -119,11 +119,12 @@ def arithmetic_operations(first_num, second_num, action):
             result[1] -= result[2] * (result[1] // result[2])
         if (first_num[3] and not second_num[3]) or (not first_num[3] and second_num[3]):
             result[3] = '-'
-    result = checking_for_positivity(result)
     return result
+
 
 def znam(num):
     return len(num.split('/')) == 1
+
 
 def checking_for_positivity(result):
     if result[0] < 0:
@@ -139,7 +140,8 @@ def bigger_smaller(first_num, second_num):
     first_num = checking_for_positivity(first_num)
     second_num = checking_for_positivity(second_num)
     return (first_num[0] * first_num[2] + first_num[1]) * second_num[2] > \
-           (second_num[0] * second_num[2] + second_num[1]) * first_num[2]
+        (second_num[0] * second_num[2] + second_num[1]) * first_num[2]
+
 
 def subtraction(first_num, second_num):
     first_num = checking_for_positivity(first_num)
@@ -155,6 +157,7 @@ def subtraction(first_num, second_num):
         result[1] -= result[2] * (result[1] // result[2])
     return result
 
+
 def addition(first_num, second_num):
     first_num = checking_for_positivity(first_num)
     second_num = checking_for_positivity(second_num)
@@ -169,6 +172,7 @@ def addition(first_num, second_num):
         result[1] -= result[2] * (result[1] // result[2])
     return result
 
+
 def sokrashenie(result_1, result_2, s):
     i = 2
     while i <= (int(result_2) // 2):
@@ -179,6 +183,7 @@ def sokrashenie(result_1, result_2, s):
         i += 1
     s -= 1
     return result_1, result_2, s
+
 
 def sokrashenie_biggest(result_1, result_2):
     s = 2
@@ -193,6 +198,7 @@ def sokrashenie_biggest(result_1, result_2):
         s = sokr[2]
     return result_1, result_2, s
 
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [['/nod', '/nok'], ['/sort', '/calc']]
     await context.bot.send_message(chat_id=update.effective_chat.id,
@@ -201,24 +207,29 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                                                                               one_time_keyboard=True))
     state[update.effective_user.id] = {'dia_stat': 0}
 
+
 async def sort(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state[update.effective_user.id]['dia_stat'] = 'sort_1'
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Введите числа, чтобы я их отсортировал")
+
 
 async def calc(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state[update.effective_user.id]['dia_stat'] = 1
     await context.bot.send_message(chat_id=update.effective_chat.id,
                                    text="Введите пример. Вот пример записи 5 5/6 - 0 2/7 + 1 3/7")
 
+
 async def nod(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state[update.effective_user.id]['dia_stat'] = 'nod_1'
     await context.bot.send_message(chat_id=update.effective_chat.id,
                                    text="Введите 2 целых числа, чтобы я сказал вам их НОД")
 
+
 async def nok(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state[update.effective_user.id]['dia_stat'] = 'nok_1'
     await context.bot.send_message(chat_id=update.effective_chat.id,
                                    text="Введите 2 целых числа, чтобы я сказал вам их НОК")
+
 
 async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # error()
@@ -242,10 +253,10 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
             else:
                 symbol = float(symbol)
             new_numbers_sort.append(symbol)
-        for i in range(len(new_numbers_sort)-1):
+        for i in range(len(new_numbers_sort) - 1):
             for j in range(len(new_numbers_sort) - 1):
                 first_num_sort = new_numbers_sort[j]
-                second_num_sort = new_numbers_sort[j+1]
+                second_num_sort = new_numbers_sort[j + 1]
                 if how_sort == 'по убыванию':
                     if second_num_sort > first_num_sort:
                         new_numbers_sort[j] = second_num_sort

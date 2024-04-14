@@ -16,6 +16,7 @@ def arifmetic_operations_div_mult(calc_actions_div_multi, calc_actions , calc_nu
     # print(calc_numbers_lst, 'calc_numbers_lst1')
     num_div_mult = 0
     for i in range(len(calc_actions_div_multi)):
+<<<<<<< HEAD
         if calc_numbers_lst[calc_actions_div_multi[i]] and calc_numbers_lst[calc_actions_div_multi[i] + 1]:
             num_div_mult = arithmetic_operations(calc_numbers_lst[calc_actions_div_multi[i]],
                                                  calc_numbers_lst[calc_actions_div_multi[i] + 1],
@@ -33,6 +34,26 @@ def arifmetic_operations_div_mult(calc_actions_div_multi, calc_actions , calc_nu
                                                                True]
     # print(num_div_mult, 'num_div_mult2')
     # print(calc_numbers_lst, 'calc_numbers_lst2')
+=======
+        print(calc_numbers_lst)
+        print(calc_actions)
+        print()
+        if calc_numbers_lst[calc_actions_div_multi[-i-1]] and calc_numbers_lst[calc_actions_div_multi[-i-1] + 1]:
+            num_div_mult = arithmetic_operations(calc_numbers_lst[calc_actions_div_multi[-i-1] + 1],
+                                                 calc_numbers_lst[calc_actions_div_multi[-i-1]],
+                                                 calc_actions[calc_actions_div_multi[-i-1]])
+            calc_numbers_lst[calc_actions_div_multi[-i-1] + 1] = None
+            calc_actions[calc_actions_div_multi[-i-1]] = None
+            if num_div_mult[3] == '-':
+                calc_numbers_lst[calc_actions_div_multi[-i-1]] = [num_div_mult[0], num_div_mult[1], num_div_mult[2],
+                                                               False]
+            else:
+                calc_numbers_lst[calc_actions_div_multi[-i-1]] = [num_div_mult[0], num_div_mult[1], num_div_mult[2],
+                                                               True]
+        print(calc_numbers_lst)
+        print(calc_actions)
+        print()
+>>>>>>> 654adef80a10ba97e2f8fda9979ecd20604a747d
     calc_numbers_lst_copy = calc_numbers_lst.copy()
     calc_actions_copy = calc_actions.copy()
     calc_numbers_lst = []
@@ -426,6 +447,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                         brokes[i][index_brokes] = count_brokes
                         last_previos_numbers_broke.append(count_brokes)
                         count_brokes -= 1
+<<<<<<< HEAD
                         count_brokes_problem -= 1
                     index_brokes += 1
             if count_brokes_problem != 0:
@@ -436,6 +458,177 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     calc_actions.append(actions_lst[i])
                     if actions_lst[i] in ['*', '/', ':']:
                         calc_actions_div_multi.append(p)
+=======
+                    brokes[i][index_brokes] = count_brokes
+                    last_previos_numbers_broke.append(count_brokes)
+                    count_brokes -= 1
+                    count_brokes_problem -= 1
+                index_brokes += 1
+        if count_brokes_problem != 0:
+            problem = True
+
+        p = 0
+        for i in range(len(actions_lst)):
+            if actions_lst[i]:
+                calc_actions.append(actions_lst[i])
+                if actions_lst[i] in ['*', '/', ':']:
+                    calc_actions_div_multi.append(p)
+                p += 1
+
+        for i in range(len(brokes)):
+            for count_in_brokes in brokes[i]:
+                if count_in_brokes > last_count_brokes:
+                    last_count_brokes = count_in_brokes
+                    calc_number = [[int(calc_numbers_lst[i][0]), int(calc_numbers_lst[i][1]),
+                                    int(calc_numbers_lst[i][2]), calc_numbers_lst[i][3]]]
+                    calc_index = [i]
+                    calc_action_broke = [calc_actions[i]]
+                    run = True
+                    j = 1
+                    while run:
+                        calc_number.append([int(calc_numbers_lst[i + j][0]), int(calc_numbers_lst[i + j][1]),
+                                            int(calc_numbers_lst[i + j][2]), calc_numbers_lst[i + j][3]])
+                        calc_index.append(i + j)
+                        z = 0
+                        while z < len(brokes[i + j]):
+                            if last_count_brokes == brokes[i + j][z]:
+                                run = False
+                            z += 1
+                        if run:
+                            calc_action_broke.append(calc_actions[i + j])
+                            j += 1
+                    calc_numbers_brokes.append(calc_number)
+                    calc_index_brokes.append(calc_index)
+                    calc_actions_brokes.append(calc_action_broke)
+
+        for i in range(len(calc_numbers_lst)):
+            calc_numbers_lst[i] = [int(calc_numbers_lst[i][0]), int(calc_numbers_lst[i][1]),
+                                   int(calc_numbers_lst[i][2]), calc_numbers_lst[i][3]]
+            calc_numbers_lst[i] = checking_for_positivity(calc_numbers_lst[i])
+
+
+
+        # Арифметические действия
+        # print(calc_numbers_lst)
+        # print(calc_numbers_brokes, 'calc_numbers_brokes')
+        # print(calc_actions_brokes, 'calc_actions_brokes')
+        # print(calc_index_brokes, 'calc_index_brokes')
+        # calc_actions_brokes_copy = calc_actions_brokes.copy()
+        if not problem:
+            for i in range(len(calc_numbers_lst)):
+                if calc_numbers_lst[i][0] >= 1000000000000000000000000000:
+                    problem = True
+        if problem:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text='К сожалению мы не можем обработать эти числа')
+            await calc(update, context)
+        else:
+            #Нужно учитывать скобки
+            inverted_calc_numbers_brokes = []#Переворачиваем списки
+            for i in range(len(calc_numbers_brokes)):
+                inverted_calc_numbers_brokes.append(calc_numbers_brokes[-i-1])
+            calc_numbers_brokes = inverted_calc_numbers_brokes
+
+            inverted_calc_actions_brokes = []
+            for i in range(len(calc_actions_brokes)):
+                inverted_calc_actions_brokes.append(calc_actions_brokes[-i - 1])
+            calc_actions_brokes = inverted_calc_actions_brokes
+
+            inverted_calc_index_brokes = []
+            for i in range(len(calc_index_brokes)):
+                inverted_calc_index_brokes.append(calc_index_brokes[-i - 1])
+            calc_index_brokes = inverted_calc_index_brokes
+
+            calc_numbers_brokes.append(calc_numbers_lst)
+            calc_actions_brokes.append(calc_actions)
+
+            calc_index_brokes_the_last_element = []
+
+            for i in range(len(calc_numbers_lst)):
+                calc_index_brokes_the_last_element.append(i)
+
+            calc_index_brokes.append(calc_index_brokes_the_last_element)
+
+            calc_numbers_brokes_results = []
+            last_index_brokes = []
+
+            for i in range(len(calc_numbers_brokes)):
+
+                replacement = 0
+                count_elements_vstr_many = []
+                number_replacement_many = []
+                index_replacement = []
+
+                for j in range(len(last_index_brokes)):#Считаем количество повторений в скобках
+                    not_replacement = True
+                    count_elements_vstr = 0
+                    number_replacement = []
+                    for q in range(len(last_index_brokes[j])):
+                        if last_index_brokes[j][q] in calc_index_brokes[i]:
+                            count_elements_vstr += 1#Количество повторов
+                            number_replacement.append(calc_index_brokes[i].index(last_index_brokes[j][q]))#Индексы повторяющихся элементов
+
+                    if count_elements_vstr == len(last_index_brokes[j]):
+                        for q in range(len(last_index_brokes)):
+                            if (len(last_index_brokes[j]) < len(last_index_brokes[q]) and last_index_brokes[j][0]
+                                    in last_index_brokes[q]):
+                                not_replacement = False
+                        if not_replacement:
+                            replacement += 1#Количество повторений в скобках
+                            count_elements_vstr_many.append(count_elements_vstr)#Список количеств повторов
+                            number_replacement_many.append(number_replacement)#Список индексов повторяющихся элементов
+                            index_replacement.append([j, i])
+                            print(last_index_brokes, 'in', calc_index_brokes)
+                            print(last_index_brokes[j], 'in', calc_index_brokes[i])
+                            print(calc_numbers_brokes_results)
+                            print(j, 'in', i)
+                            print('j index result')
+                            print('i index calc_numbers_brokes')
+
+                for j in range(replacement):#Делаем замены
+
+                    num_replace = 0#Номер замены
+                    for q in range(count_elements_vstr_many[j]):
+                        index_replacement_for_num_replace = index_replacement[j][1]
+                        if num_replace == 0:#Если замена 1, то он заменяет на результат нужной скобки
+                            print(calc_numbers_brokes)
+                            print(calc_numbers_brokes[index_replacement[j][1]][calc_index_brokes[index_replacement_for_num_replace][q]])
+                            print(calc_numbers_brokes_results)
+                            print(calc_numbers_brokes_results[index_replacement[j][0]])
+                            print(calc_numbers_brokes_results)
+                            calc_numbers_brokes[index_replacement[j][1]][calc_index_brokes[index_replacement_for_num_replace][q]] \
+                                = calc_numbers_brokes_results[index_replacement[j][0]]
+                            # calc_numbers_brokes[i][calc_index_brokes[i].index(number_replacement_many[j][q])] = (
+                            #     calc_numbers_brokes_results)[calc_index_brokes.index(number_replacement_many[j])]
+
+                        else:#Если замена не 1, то он заменяет на None
+                            calc_numbers_brokes[index_replacement[j][1]][calc_index_brokes[index_replacement_for_num_replace][q]] = None
+                        num_replace += 1
+
+                    # Настройка actions
+                    for m in range(len(number_replacement_many[j]) - 1):#Количество заменяемых элементов - 1
+                        calc_actions_brokes[i][number_replacement_many[j][m]] = None
+
+
+                new_calc_numbers_brokes = []#Отчистка от None чисел
+                for m in range(len(calc_numbers_brokes[i])):
+                    if calc_numbers_brokes[i][m] != None:
+                        new_calc_numbers_brokes.append(calc_numbers_brokes[i][m])
+                calc_numbers_brokes[i] = new_calc_numbers_brokes
+
+
+                new_calc_actions_brokes = []#Отчистка от None действий
+                for m in range(len(calc_actions_brokes[i])):
+                    if calc_actions_brokes[i][m] != None:
+                        new_calc_actions_brokes.append(calc_actions_brokes[i][m])
+                calc_actions_brokes[i] = new_calc_actions_brokes
+
+                calc_actions_div_multi_broke = []#Создание calc_actions_div_multi_broke
+                p = 0
+                for symbol in calc_actions_brokes[i]:
+                    if symbol in ['*', '/', ':']:
+                        calc_actions_div_multi_broke.append(p)
+>>>>>>> 654adef80a10ba97e2f8fda9979ecd20604a747d
                     p += 1
 
             for i in range(len(brokes)):
