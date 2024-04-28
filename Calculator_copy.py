@@ -205,7 +205,7 @@ def sokrashenie_biggest(result_1, result_2):
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [['/calculations'], ['/reduction_of_fractions'], ['/a_number_in_a_power'], ['/nod', '/nok', '/sort']]
+    keyboard = [['/calculations'], ['/reduction_of_fractions', '/a_number_in_a_power'], ['/nod', '/nok']]
     await context.bot.send_message(chat_id=update.effective_chat.id,
                                    text="Выберите действие", reply_markup=ReplyKeyboardMarkup(keyboard,
                                                                                               resize_keyboard=True,
@@ -213,9 +213,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state[update.effective_user.id] = {'dia_stat': 0}
 
 
-async def sort(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    state[update.effective_user.id]['dia_stat'] = 'sort_1'
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="Введите числа, чтобы я их отсортировал")
+# async def sort(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     state[update.effective_user.id]['dia_stat'] = 'sort_1'
+#     await context.bot.send_message(chat_id=update.effective_chat.id, text="Введите числа, чтобы я их отсортировал")
 
 
 async def calc(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -378,43 +378,43 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
         finally:
             pass
 
-    if state[update.effective_user.id]['dia_stat'] == 'sort_1':
-        keyboard = [['по возрастанию', 'по убыванию']]
-        state[update.effective_user.id]['numbers_sort'] = update.effective_message.text.split(' ')
-        state[update.effective_user.id]['dia_stat'] = 'sort_2'
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="Как нужно отсортировать?",
-                                       reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True,
-                                                                        one_time_keyboard=True))
-    elif state[update.effective_user.id]['dia_stat'] == 'sort_2':
-        state[update.effective_user.id]['how_sort'] = update.effective_message.text
-        state[update.effective_user.id]['dia_stat'] = 'sort_0'
-        how_sort = state[update.effective_user.id]['how_sort']
-        new_numbers_sort = []
-        new_numbers_sort_str = []
-        old_numbers_sort = [state[update.effective_user.id]['numbers_sort']]
-        for symbol in old_numbers_sort[0]:
-            if float(symbol) % 1 == 0:
-                symbol = int(symbol)
-            else:
-                symbol = float(symbol)
-            new_numbers_sort.append(symbol)
-        for i in range(len(new_numbers_sort) - 1):
-            for j in range(len(new_numbers_sort) - 1):
-                first_num_sort = new_numbers_sort[j]
-                second_num_sort = new_numbers_sort[j + 1]
-                if how_sort == 'по убыванию':
-                    if second_num_sort > first_num_sort:
-                        new_numbers_sort[j] = second_num_sort
-                        new_numbers_sort[j + 1] = first_num_sort
-                elif how_sort == 'по возрастанию':
-                    if second_num_sort < first_num_sort:
-                        new_numbers_sort[j] = second_num_sort
-                        new_numbers_sort[j + 1] = first_num_sort
-        for symbol in new_numbers_sort:
-            symbol = str(symbol)
-            new_numbers_sort_str.append(symbol)
-        text = ' '.join(new_numbers_sort_str)
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+    # if state[update.effective_user.id]['dia_stat'] == 'sort_1':
+    #     keyboard = [['по возрастанию', 'по убыванию']]
+    #     state[update.effective_user.id]['numbers_sort'] = update.effective_message.text.split(' ')
+    #     state[update.effective_user.id]['dia_stat'] = 'sort_2'
+    #     await context.bot.send_message(chat_id=update.effective_chat.id, text="Как нужно отсортировать?",
+    #                                    reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True,
+    #                                                                     one_time_keyboard=True))
+    # elif state[update.effective_user.id]['dia_stat'] == 'sort_2':
+    #     state[update.effective_user.id]['how_sort'] = update.effective_message.text
+    #     state[update.effective_user.id]['dia_stat'] = 'sort_0'
+    #     how_sort = state[update.effective_user.id]['how_sort']
+    #     new_numbers_sort = []
+    #     new_numbers_sort_str = []
+    #     old_numbers_sort = [state[update.effective_user.id]['numbers_sort']]
+    #     for symbol in old_numbers_sort[0]:
+    #         if float(symbol) % 1 == 0:
+    #             symbol = int(symbol)
+    #         else:
+    #             symbol = float(symbol)
+    #         new_numbers_sort.append(symbol)
+    #     for i in range(len(new_numbers_sort) - 1):
+    #         for j in range(len(new_numbers_sort) - 1):
+    #             first_num_sort = new_numbers_sort[j]
+    #             second_num_sort = new_numbers_sort[j + 1]
+    #             if how_sort == 'по убыванию':
+    #                 if second_num_sort > first_num_sort:
+    #                     new_numbers_sort[j] = second_num_sort
+    #                     new_numbers_sort[j + 1] = first_num_sort
+    #             elif how_sort == 'по возрастанию':
+    #                 if second_num_sort < first_num_sort:
+    #                     new_numbers_sort[j] = second_num_sort
+    #                     new_numbers_sort[j + 1] = first_num_sort
+    #     for symbol in new_numbers_sort:
+    #         symbol = str(symbol)
+    #         new_numbers_sort_str.append(symbol)
+    #     text = ' '.join(new_numbers_sort_str)
+    #     await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
     if state[update.effective_user.id]['dia_stat'] == 'nod_1':
         numbers_nod = update.effective_message.text.split(' ')
@@ -853,8 +853,8 @@ if __name__ == '__main__':
     reduction_of_fractions_handler = CommandHandler('reduction_of_fractions', reduction_of_fractions)
     application.add_handler(reduction_of_fractions_handler)
 
-    sort_handler = CommandHandler('sort', sort)
-    application.add_handler(sort_handler)
+    # sort_handler = CommandHandler('sort', sort)
+    # application.add_handler(sort_handler)
 
     message_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), message_processing)
     application.add_handler(message_handler)
