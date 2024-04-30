@@ -1,7 +1,11 @@
 import logging
+import sqlite3
+
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, LabeledPrice
 from telegram.ext import (ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler, MessageHandler,
                           ConversationHandler, PreCheckoutQueryHandler, filters)
+from database import create_bd
+
 from config import config_3
 from templates import keyboard_start
 import json
@@ -163,12 +167,18 @@ async def precheckout_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 async def successful_payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Confirms the successful payment."""
     # do something after successfully receiving payment?
+    print(update)
     await update.message.reply_text("Спасибо за покупку!")
+    with sqlite3.connect('inline_menu_bot_db.sqlite3') as conn:
+        cursor = conn.cursor()
+        cursor.execute(f'INSERT INTO payments VALUES(NULL, {update.effective_user.id}, {update.effective_message.successful_payment.total_amount})')
+        conn.commit()
+
 
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(config_3['token']).build()
-
+    create_bd('inline_menu_bot_db.sqlite3')
     conv_hand = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={

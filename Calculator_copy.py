@@ -205,7 +205,7 @@ def sokrashenie_biggest(result_1, result_2):
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [['/calculations'], ['/reduction_of_fractions', '/a_number_in_a_power'], ['/nod', '/nok']]
+    keyboard = [['/calculations'], ['/reduction_of_fractions', '/a_number_in_a_power'], ['/nod', '/nok', '/sort']]
     await context.bot.send_message(chat_id=update.effective_chat.id,
                                    text="Выберите действие", reply_markup=ReplyKeyboardMarkup(keyboard,
                                                                                               resize_keyboard=True,
@@ -213,9 +213,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state[update.effective_user.id] = {'dia_stat': 0}
 
 
-# async def sort(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     state[update.effective_user.id]['dia_stat'] = 'sort_1'
-#     await context.bot.send_message(chat_id=update.effective_chat.id, text="Введите числа, чтобы я их отсортировал")
+async def sort(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    state[update.effective_user.id]['dia_stat'] = 'sort_1'
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="Введите числа или дроби ЧЕРЕЗ ЗАПЯТУЮ, чтобы я их отсортировал")
 
 
 async def calc(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -378,43 +378,111 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
         finally:
             pass
 
-    # if state[update.effective_user.id]['dia_stat'] == 'sort_1':
-    #     keyboard = [['по возрастанию', 'по убыванию']]
-    #     state[update.effective_user.id]['numbers_sort'] = update.effective_message.text.split(' ')
-    #     state[update.effective_user.id]['dia_stat'] = 'sort_2'
-    #     await context.bot.send_message(chat_id=update.effective_chat.id, text="Как нужно отсортировать?",
-    #                                    reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True,
-    #                                                                     one_time_keyboard=True))
-    # elif state[update.effective_user.id]['dia_stat'] == 'sort_2':
-    #     state[update.effective_user.id]['how_sort'] = update.effective_message.text
-    #     state[update.effective_user.id]['dia_stat'] = 'sort_0'
-    #     how_sort = state[update.effective_user.id]['how_sort']
-    #     new_numbers_sort = []
-    #     new_numbers_sort_str = []
-    #     old_numbers_sort = [state[update.effective_user.id]['numbers_sort']]
-    #     for symbol in old_numbers_sort[0]:
-    #         if float(symbol) % 1 == 0:
-    #             symbol = int(symbol)
-    #         else:
-    #             symbol = float(symbol)
-    #         new_numbers_sort.append(symbol)
-    #     for i in range(len(new_numbers_sort) - 1):
-    #         for j in range(len(new_numbers_sort) - 1):
-    #             first_num_sort = new_numbers_sort[j]
-    #             second_num_sort = new_numbers_sort[j + 1]
-    #             if how_sort == 'по убыванию':
-    #                 if second_num_sort > first_num_sort:
-    #                     new_numbers_sort[j] = second_num_sort
-    #                     new_numbers_sort[j + 1] = first_num_sort
-    #             elif how_sort == 'по возрастанию':
-    #                 if second_num_sort < first_num_sort:
-    #                     new_numbers_sort[j] = second_num_sort
-    #                     new_numbers_sort[j + 1] = first_num_sort
-    #     for symbol in new_numbers_sort:
-    #         symbol = str(symbol)
-    #         new_numbers_sort_str.append(symbol)
-    #     text = ' '.join(new_numbers_sort_str)
-    #     await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+    if state[update.effective_user.id]['dia_stat'] == 'sort_1':
+        keyboard = [['по возрастанию', 'по убыванию']]
+        state[update.effective_user.id]['numbers_sort'] = update.effective_message.text.replace(',', '_')
+        state[update.effective_user.id]['numbers_sort'] = state[update.effective_user.id]['numbers_sort'].split('_')
+        state[update.effective_user.id]['dia_stat'] = 'sort_2'
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Как нужно отсортировать?",
+                                       reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True,
+                                                                        one_time_keyboard=True))
+    elif state[update.effective_user.id]['dia_stat'] == 'sort_2':
+        text_error = 'К сожалению, мы не можем обработать эти числа.😢'
+        try:
+            state[update.effective_user.id]['how_sort'] = update.effective_message.text
+            state[update.effective_user.id]['dia_stat'] = 'sort_0'
+            how_sort = state[update.effective_user.id]['how_sort']
+            old_numbers_sort_str = state[update.effective_user.id]['numbers_sort']
+            old_numbers_sort_lst = [[] for i in range(len(old_numbers_sort_str))]
+            for i in range(len(old_numbers_sort_str)):
+                while old_numbers_sort_str[i][0] == ' ':
+                    old_numbers_sort_str[i] = old_numbers_sort_str[i].replace(' ', '', 1)
+
+            i = 0
+            for number in old_numbers_sort_str:
+                if len(number.split(' ')) == 2:
+                    if number[0] != '-':
+                        old_numbers_sort_lst[i] = [int(number.split(' ')[1].split('/')[0]) +
+                                                   (int(number.split(' ')[0]) * int(number.split(' ')[1].split('/')[1])),
+                                                   int(number.split(' ')[1].split('/')[1]),
+                                                   True]
+                    else:
+                        old_numbers_sort_lst[i] = [int(number.split(' ')[1].split('/')[0]) +
+                                                   (int(number.split(' ')[0]) * -1 * int(number.split(' ')[1].split('/')[1])),
+                                                   int(number.split(' ')[1].split('/')[1]),
+                                                   False]
+                if len(number.split(' ')) == 1:
+                    if len(number.split('/')) == 1:
+                        if number[0] != '-':
+                            old_numbers_sort_lst[i] = [int(number),
+                                                       1,
+                                                       True]
+                        else:
+                            old_numbers_sort_lst[i] = [int(number)*-1,
+                                                       1,
+                                                       False]
+                    if len(number.split('/')) == 2:
+                        if number[0] != '-':
+                            old_numbers_sort_lst[i] = [int(number.split('/')[0]),
+                                                       int(number.split('/')[1]),
+                                                       True]
+                        else:
+                            old_numbers_sort_lst[i] = [int(number.split('/')[0])*-1,
+                                                       int(number.split('/')[1]),
+                                                       False]
+
+                i += 1
+
+            multi_znam = 1
+            for znamenat in old_numbers_sort_lst:
+                multi_znam *= znamenat[1]
+
+            for i in range(len(old_numbers_sort_lst)):
+                old_numbers_sort_lst[i][0] *= (multi_znam // old_numbers_sort_lst[i][1])
+                old_numbers_sort_lst[i][1] *= (multi_znam // old_numbers_sort_lst[i][1])
+                if not old_numbers_sort_lst[i][2]:
+                    old_numbers_sort_lst[i][0] *= -1
+
+            print(old_numbers_sort_lst, old_numbers_sort_str)
+
+            for j in range(len(old_numbers_sort_lst) - 1):
+                for i in range(len(old_numbers_sort_lst) - 1):
+                    if how_sort == 'по убыванию':
+                        if old_numbers_sort_lst[i][0] < old_numbers_sort_lst[i+1][0]:
+                            old_numbers_sort_lst[i], old_numbers_sort_lst[i+1] = (old_numbers_sort_lst[i+1],
+                                                                                  old_numbers_sort_lst[i])
+                            old_numbers_sort_str[i], old_numbers_sort_str[i + 1] = (old_numbers_sort_str[i + 1],
+                                                                                    old_numbers_sort_str[i])
+                    elif how_sort == 'по возрастанию':
+                        if old_numbers_sort_lst[i][0] > old_numbers_sort_lst[i+1][0]:
+                            old_numbers_sort_lst[i], old_numbers_sort_lst[i+1] = (old_numbers_sort_lst[i+1],
+                                                                                  old_numbers_sort_lst[i])
+                            old_numbers_sort_str[i], old_numbers_sort_str[i + 1] = (old_numbers_sort_str[i + 1],
+                                                                                    old_numbers_sort_str[i])
+
+            print(old_numbers_sort_lst, old_numbers_sort_str)
+
+            text = ' '.join(old_numbers_sort_str)
+            await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+        except IndexError:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text=text_error + ' Возможно, вы не правильно ввели числа или дроби.')
+
+            print(IndexError)
+        except TypeError:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text=text_error)
+            print(TypeError)
+        except ValueError:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text=text_error)
+            print(ValueError)
+        except OverflowError:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text=text_error)
+            print(OverflowError)
+        finally:
+            pass
 
     if state[update.effective_user.id]['dia_stat'] == 'nod_1':
         numbers_nod = update.effective_message.text.split(' ')
@@ -853,8 +921,8 @@ if __name__ == '__main__':
     reduction_of_fractions_handler = CommandHandler('reduction_of_fractions', reduction_of_fractions)
     application.add_handler(reduction_of_fractions_handler)
 
-    # sort_handler = CommandHandler('sort', sort)
-    # application.add_handler(sort_handler)
+    sort_handler = CommandHandler('sort', sort)
+    application.add_handler(sort_handler)
 
     message_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), message_processing)
     application.add_handler(message_handler)
