@@ -474,7 +474,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
             old_numbers_sort_str_for_print = []
 
             for i in range(len(old_numbers_sort_str) - 1):
-                old_numbers_sort_str_for_print.append(old_numbers_sort_str[i] + ', ')
+                old_numbers_sort_str_for_print.append(old_numbers_sort_str[i] + ',')
             old_numbers_sort_str_for_print.append(old_numbers_sort_str[-1])
 
             text = ' '.join(old_numbers_sort_str_for_print)
