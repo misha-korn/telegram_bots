@@ -405,27 +405,39 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
             how_sort = state[update.effective_user.id]['how_sort']
             old_numbers_sort_str = state[update.effective_user.id]['numbers_sort']
             old_numbers_sort_lst = [[] for i in range(len(old_numbers_sort_str))]
+            # print(old_numbers_sort_str)
             for i in range(len(old_numbers_sort_str)):
                 while old_numbers_sort_str[i][0] == ' ':
-                    old_numbers_sort_str[i] = old_numbers_sort_str[i].replace(' ', '', 1)
+                    old_numbers_sort_str[i] = old_numbers_sort_str[i][1:]
+
+                while old_numbers_sort_str[i][-1] == ' ':
+                    old_numbers_sort_str[i] = old_numbers_sort_str[i][:-1]
+
+                while '- ' in old_numbers_sort_str[i]:
+                    old_numbers_sort_str[i] = old_numbers_sort_str[i].replace('- ', '-', 1)
+
+                while '  ' in old_numbers_sort_str[i]:
+                    old_numbers_sort_str[i] = old_numbers_sort_str[i].replace('  ', ' ', 1)
 
             i = 0
             for number in old_numbers_sort_str:
-                if len(number.split(' ')) == 2:
+                split_num_lst = number.split(' ')
+
+                if len(split_num_lst) == 2:
                     if number[0] != '-':
-                        old_numbers_sort_lst[i] = [int(number.split(' ')[1].split('/')[0]) +
-                                                   (int(number.split(' ')[0]) * int(
-                                                       number.split(' ')[1].split('/')[1])),
-                                                   int(number.split(' ')[1].split('/')[1]),
+                        old_numbers_sort_lst[i] = [int(split_num_lst[1].split('/')[0]) +
+                                                   (int(split_num_lst[0]) * int(
+                                                       split_num_lst[1].split('/')[1])),
+                                                   int(split_num_lst[1].split('/')[1]),
                                                    True]
                     else:
-                        old_numbers_sort_lst[i] = [int(number.split(' ')[1].split('/')[0]) +
-                                                   (int(number.split(' ')[0]) * -1 * int(
-                                                       number.split(' ')[1].split('/')[1])),
-                                                   int(number.split(' ')[1].split('/')[1]),
+                        old_numbers_sort_lst[i] = [int(split_num_lst[1].split('/')[0]) +
+                                                   (int(split_num_lst[0]) * -1 * int(
+                                                       split_num_lst[1].split('/')[1])),
+                                                   int(split_num_lst[1].split('/')[1]),
                                                    False]
-                if len(number.split(' ')) == 1:
-                    if len(number.split('/')) == 1:
+                if len(split_num_lst) == 1:
+                    if len(split_num_lst[0].split('/')) == 1:
                         if number[0] != '-':
                             old_numbers_sort_lst[i] = [int(number),
                                                        1,
@@ -434,7 +446,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                             old_numbers_sort_lst[i] = [int(number) * -1,
                                                        1,
                                                        False]
-                    if len(number.split('/')) == 2:
+                    if len(split_num_lst[0].split('/')) == 2:
                         if number[0] != '-':
                             old_numbers_sort_lst[i] = [int(number.split('/')[0]),
                                                        int(number.split('/')[1]),
@@ -445,6 +457,8 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                                                        False]
 
                 i += 1
+
+            # print(old_numbers_sort_lst)
 
             multi_znam = 1
             for znamenat in old_numbers_sort_lst:
