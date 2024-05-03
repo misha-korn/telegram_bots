@@ -745,14 +745,15 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
             if not problem:
                 for i in range(len(calc_numbers_lst)):
-                    if calc_numbers_lst[i][0] >= 1000000000000000000000000000:
+                    if (calc_numbers_lst[i][0] >= 1000000000000000000000000000 or
+                            calc_numbers_lst[i][2] >= 100000 or
+                            calc_numbers_lst[i][1] >= 100000):
                         problem = True
 
             if problem:
+                await context.bot.send_message(chat_id=update.effective_chat.id,
+                                               text='Числитель, знаменатель или целая часть от введённых вами чисел слишком большая...')
                 raise IndexError
-                # await context.bot.send_message(chat_id=update.effective_chat.id,
-                #                                text='К сожалению мы не можем обработать эти числа')
-                # await calc(update, context)
             else:
                 # Нужно учитывать скобки
                 inverted_calc_numbers_brokes = []  # Переворачиваем списки
