@@ -209,7 +209,7 @@ def sokrashenie_biggest(result_1, result_2):
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [['/calculations'], ['/reduction_of_fractions', '/a_number_in_a_power'], ['/nod', '/nok', '/sort']]
+    keyboard = [['/calculations'], ['/reduction', '/exponentiation'], ['/nod', '/nok', '/sort']]
     await context.bot.send_message(chat_id=update.effective_chat.id,
                                    text="Выберите действие", reply_markup=ReplyKeyboardMarkup(keyboard,
                                                                                               resize_keyboard=True,
@@ -939,7 +939,7 @@ if __name__ == '__main__':
     calc_handler = CommandHandler('calculations', calc)  # Создаю обработчик команд
     application.add_handler(calc_handler)
 
-    a_number_in_a_power_handler = CommandHandler('a_number_in_a_power', a_number_in_a_power)
+    a_number_in_a_power_handler = CommandHandler('exponentiation', a_number_in_a_power)
     application.add_handler(a_number_in_a_power_handler)
 
     nod_handler = CommandHandler('nod', nod)
@@ -948,7 +948,7 @@ if __name__ == '__main__':
     nok_handler = CommandHandler('nok', nok)
     application.add_handler(nok_handler)
 
-    reduction_of_fractions_handler = CommandHandler('reduction_of_fractions', reduction_of_fractions)
+    reduction_of_fractions_handler = CommandHandler('reduction', reduction_of_fractions)
     application.add_handler(reduction_of_fractions_handler)
 
     sort_handler = CommandHandler('sort', sort)
