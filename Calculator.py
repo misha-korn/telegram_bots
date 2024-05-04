@@ -660,9 +660,9 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     right_brokes += 1
                     calc_number[2] = calc_number[2].replace(')', '', 1)
                     brokes[i].append(')')
-                while calc_number[1][-1] == ')':
+                while calc_number[0][-1] == ')':
                     right_brokes += 1
-                    calc_number[1] = calc_number[1].replace(')', '', 1)
+                    calc_number[0] = calc_number[0].replace(')', '', 1)
                     brokes[i].append(')')
                 if calc_number[0][0] == '-':
                     calc_numbers_lst[i] = [calc_number[0], calc_number[1], calc_number[2], False]
