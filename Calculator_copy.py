@@ -293,11 +293,11 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                                                                                           'слишком большой, '
                                                                                           'поэтому мы не можем '
                                                                                           'сократить полученную дробь.')
-                    state[update.effective_user.id]['dia_stat'] = 'a_number_in_a_power_0'
+                    state[update.effective_user.id]['dia_stat'] = 'a_number_in_a_power_1'
                     raise IndexError
                 sokr_biggest = sokrashenie_biggest(result_a_power[1], result_a_power[2])
                 result_a_power[1], result_a_power[2] = int(sokr_biggest[0]), int(sokr_biggest[1])
-            state[update.effective_user.id]['dia_stat'] = 'a_number_in_a_power_0'
+            state[update.effective_user.id]['dia_stat'] = 'a_number_in_a_power_1'
             if result_a_power[3] == True:
                 result_a_power[3] = ''
             elif result_a_power[3] == False:
@@ -358,13 +358,19 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
             if update.effective_message.text[0] == '-':
                 reduction_number[3] = False
             result_reduction = arithmetic_operations(reduction_number, [1, 0, 1, True], '*')
+
+            if int(result_reduction[1]) > 100000 or int(result_reduction[2]) > 100000:
+                await context.bot.send_message(chat_id=update.effective_chat.id,
+                                               text='Числитель, знаменатель или целая часть введённых вами чисел слишком большая...')
+                raise IndexError
+
             sokr_biggest = sokrashenie_biggest(result_reduction[1], result_reduction[2])
             result_reduction[1], result_reduction[2] = int(sokr_biggest[0]), int(sokr_biggest[1])
             if result_reduction[1] != 0:
                 text = f'{result_reduction[3]}{result_reduction[0]} {result_reduction[1]}/{result_reduction[2]}'
             else:
                 text = f'{result_reduction[3]}{result_reduction[0]}'
-            state[update.effective_user.id]['dia_stat'] = 'reduction_0'
+            # state[update.effective_user.id]['dia_stat'] = 'reduction_0'
             await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
         except IndexError:
             await context.bot.send_message(chat_id=update.effective_chat.id,
@@ -401,7 +407,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
         text_error = 'К сожалению, мы не можем обработать эти числа.😢'
         try:
             state[update.effective_user.id]['how_sort'] = update.effective_message.text
-            state[update.effective_user.id]['dia_stat'] = 'sort_0'
+            state[update.effective_user.id]['dia_stat'] = 'sort_1'
             how_sort = state[update.effective_user.id]['how_sort']
             old_numbers_sort_str = state[update.effective_user.id]['numbers_sort']
             old_numbers_sort_lst = [[] for i in range(len(old_numbers_sort_str))]
@@ -530,7 +536,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 for i in range(1, min(new_numbers_nod) + 1):
                     if new_numbers_nod[0] % i == 0 and new_numbers_nod[1] % i == 0:
                         max_nod = i
-                state[update.effective_user.id]['dia_stat'] = 0
+                # state[update.effective_user.id]['dia_stat'] = 0
                 await context.bot.send_message(chat_id=update.effective_chat.id, text=max_nod)
 
     if state[update.effective_user.id]['dia_stat'] == 'nok_1':
@@ -564,7 +570,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     second_number += second_number_copy
                     first_lst.append(first_number)
                     second_lst.append(second_number)
-                state[update.effective_user.id]['dia_stat'] = 0
+                # state[update.effective_user.id]['dia_stat'] = 0
                 await context.bot.send_message(chat_id=update.effective_chat.id, text=min_nok)
 
     if state[update.effective_user.id]['dia_stat'] == 1:
@@ -752,7 +758,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
             if problem:
                 await context.bot.send_message(chat_id=update.effective_chat.id,
-                                               text='Числитель, знаменатель или целая часть от введённых вами чисел слишком большая...')
+                                               text='Числитель, знаменатель или целая часть введённых вами чисел слишком большая...')
                 raise IndexError
             else:
                 # Нужно учитывать скобки
