@@ -288,7 +288,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
             result_a_power = power_number
             for i in range(state[update.effective_user.id]['power'] - 1):
                 result_a_power = arithmetic_operations(result_a_power, result_a_power, '*')
-                if int(result_a_power[1]) >= 5000000:
+                if int(result_a_power[1]) >= 5000000 or int(result_a_power[2]) >= 5000000:
                     await context.bot.send_message(chat_id=update.effective_chat.id, text='Числитель в результате '
                                                                                           'слишком большой, '
                                                                                           'поэтому мы не можем '
@@ -298,10 +298,18 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 sokr_biggest = sokrashenie_biggest(result_a_power[1], result_a_power[2])
                 result_a_power[1], result_a_power[2] = int(sokr_biggest[0]), int(sokr_biggest[1])
             state[update.effective_user.id]['dia_stat'] = 'a_number_in_a_power_1'
+            # print(result_a_power)
             if result_a_power[3] == True:
                 result_a_power[3] = ''
             elif result_a_power[3] == False:
+                if str(result_a_power[0])[0] == '-':
+                    result_a_power[0] *= -1
+                elif str(result_a_power[1])[0] == '-':
+                    result_a_power[1] *= -1
                 result_a_power[3] = '-'
+            if result_a_power[1] >= result_a_power[2]:
+                result_a_power[0] += result_a_power[1] // result_a_power[2]
+                result_a_power[1] -= result_a_power[2] * (result_a_power[1] // result_a_power[2])
             if result_a_power[1] != 0:
                 text = f'{result_a_power[3]}{result_a_power[0]} {result_a_power[1]}/{result_a_power[2]}'
             else:
@@ -328,7 +336,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                                            text=text_error)
             # print(OverflowError)
         finally:
-            pass
+            state[update.effective_user.id]['dia_stat'] = 'a_number_in_a_power_1'
 
     if state[update.effective_user.id]['dia_stat'] == 'reduction_1':
         text_error = 'К сожалению, мы не можем сократить данную дробь.😢'
@@ -503,75 +511,123 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
             await context.bot.send_message(chat_id=update.effective_chat.id,
                                            text=text_error + ' Возможно, вы не правильно ввели числа или дроби.')
 
-            print(IndexError)
+            # print(IndexError)
         except TypeError:
             await context.bot.send_message(chat_id=update.effective_chat.id,
                                            text=text_error)
-            print(TypeError)
+            # print(TypeError)
         except ValueError:
             await context.bot.send_message(chat_id=update.effective_chat.id,
                                            text=text_error)
-            print(ValueError)
+            # print(ValueError)
         except OverflowError:
             await context.bot.send_message(chat_id=update.effective_chat.id,
                                            text=text_error)
-            print(OverflowError)
+            # print(OverflowError)
+        finally:
+            state[update.effective_user.id]['dia_stat'] = 'sort_1'
+
+    if state[update.effective_user.id]['dia_stat'] == 'nod_1':
+        text_error = 'К сожалению, мы не можем обработать эти числа.😢'
+        try:
+            numbers_nod = update.effective_message.text.split(' ')
+            if float(numbers_nod[0]) % 1 != 0 or float(numbers_nod[1]) % 1 != 0:
+                await context.bot.send_message(chat_id=update.effective_chat.id,
+                                               text='Введите 2 целых числа')
+                await nod(update, context)
+            else:
+                new_numbers_nod = [int(numbers_nod[0]), int(numbers_nod[1])]
+                max_nod = 0
+                if new_numbers_nod[0] >= 1000000 or new_numbers_nod[1] >= 1000000:
+                    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                                   text='Введите 2 числа поменьше, чтобы не нагружать сервер')
+                    await nod(update, context)
+                else:
+                    for i in range(1, min(new_numbers_nod) + 1):
+                        if new_numbers_nod[0] % i == 0 and new_numbers_nod[1] % i == 0:
+                            max_nod = i
+                    # state[update.effective_user.id]['dia_stat'] = 0
+                    await context.bot.send_message(chat_id=update.effective_chat.id, text=max_nod)
+        except IndexError:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text=text_error)
+            # print(IndexError)
+        except TypeError:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text=text_error)
+            # print(TypeError)
+        except ValueError:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text=text_error)
+            # print(ValueError)
+        except ZeroDivisionError:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text=text_error)
+            # print(ZeroDivisionError)
+        except OverflowError:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text=text_error)
+            # print(OverflowError)
         finally:
             pass
 
-    if state[update.effective_user.id]['dia_stat'] == 'nod_1':
-        numbers_nod = update.effective_message.text.split(' ')
-        if float(numbers_nod[0]) % 1 != 0 or float(numbers_nod[1]) % 1 != 0:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text='Введите 2 целых числа')
-            await nod(update, context)
-        else:
-            new_numbers_nod = [int(numbers_nod[0]), int(numbers_nod[1])]
-            max_nod = 0
-            if new_numbers_nod[0] >= 1000000 or new_numbers_nod[1] >= 1000000:
-                await context.bot.send_message(chat_id=update.effective_chat.id,
-                                               text='Введите 2 числа поменьше, чтобы не нагружать сервер')
-                await nod(update, context)
-            else:
-                for i in range(1, min(new_numbers_nod) + 1):
-                    if new_numbers_nod[0] % i == 0 and new_numbers_nod[1] % i == 0:
-                        max_nod = i
-                # state[update.effective_user.id]['dia_stat'] = 0
-                await context.bot.send_message(chat_id=update.effective_chat.id, text=max_nod)
-
     if state[update.effective_user.id]['dia_stat'] == 'nok_1':
-        numbers_nok = update.effective_message.text.split(' ')
-        if float(numbers_nok[0]) % 1 != 0 or float(numbers_nok[1]) % 1 != 0:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text='Введите 2 целых числа')
-            await nok(update, context)
-        else:
-            new_numbers_nok = [int(numbers_nok[0]), int(numbers_nok[1])]
-            if new_numbers_nok[0] > 1000 or new_numbers_nok[1] > 1000:
+        text_error = 'К сожалению, мы не можем обработать эти числа.😢'
+        try:
+            numbers_nok = update.effective_message.text.split(' ')
+            if float(numbers_nok[0]) % 1 != 0 or float(numbers_nok[1]) % 1 != 0:
                 await context.bot.send_message(chat_id=update.effective_chat.id,
-                                               text='Введите 2 числа поменьше, чтобы не нагружать сервер')
+                                               text='Введите 2 целых числа')
                 await nok(update, context)
             else:
-                min_nok = 0
-                first_number = new_numbers_nok[0]
-                second_number = new_numbers_nok[1]
-                first_number_copy = first_number
-                second_number_copy = second_number
-                first_lst = [first_number]
-                second_lst = [second_number]
-                run = True
-                while run:
-                    for symbol_f_nok in first_lst:
-                        for symbol_s_nok in second_lst:
-                            if symbol_f_nok == symbol_s_nok:
-                                min_nok = symbol_f_nok
-                                run = False
-                    first_number += first_number_copy
-                    second_number += second_number_copy
-                    first_lst.append(first_number)
-                    second_lst.append(second_number)
-                # state[update.effective_user.id]['dia_stat'] = 0
-                await context.bot.send_message(chat_id=update.effective_chat.id, text=min_nok)
+                new_numbers_nok = [int(numbers_nok[0]), int(numbers_nok[1])]
+                if new_numbers_nok[0] > 1000 or new_numbers_nok[1] > 1000:
+                    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                                   text='Введите 2 числа поменьше, чтобы не нагружать сервер')
+                    await nok(update, context)
+                else:
+                    min_nok = 0
+                    first_number = new_numbers_nok[0]
+                    second_number = new_numbers_nok[1]
+                    first_number_copy = first_number
+                    second_number_copy = second_number
+                    first_lst = [first_number]
+                    second_lst = [second_number]
+                    run = True
+                    while run:
+                        for symbol_f_nok in first_lst:
+                            for symbol_s_nok in second_lst:
+                                if symbol_f_nok == symbol_s_nok:
+                                    min_nok = symbol_f_nok
+                                    run = False
+                        first_number += first_number_copy
+                        second_number += second_number_copy
+                        first_lst.append(first_number)
+                        second_lst.append(second_number)
+                    # state[update.effective_user.id]['dia_stat'] = 0
+                    await context.bot.send_message(chat_id=update.effective_chat.id, text=min_nok)
+        except IndexError:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text=text_error)
+            # print(IndexError)
+        except TypeError:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text=text_error)
+            # print(TypeError)
+        except ValueError:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text=text_error)
+            # print(ValueError)
+        except ZeroDivisionError:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text=text_error)
+            # print(ZeroDivisionError)
+        except OverflowError:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text=text_error)
+            # print(OverflowError)
+        finally:
+            pass
 
     if state[update.effective_user.id]['dia_stat'] == 1:
         text_error = 'К сожалению, мы не можем обработать эти числа.😢'
