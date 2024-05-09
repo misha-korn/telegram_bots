@@ -691,9 +691,12 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     if not len(int_numbers_lst[i][0].split(',')) == 2:
                         calc_numbers_lst[i] = [int_numbers_lst[i][0], '0', '1', '']
                     else:
+                        decimal_part = 1
+                        for j in range(len(str(int_numbers_lst[i][0].split(',')[1]))):
+                            decimal_part *= 10
                         calc_numbers_lst[i] = [int_numbers_lst[i][0].split(',')[0],
                                                int_numbers_lst[i][0].split(',')[1],
-                                               '10', '']
+                                               str(decimal_part), '']
                 elif len(int_numbers_lst[i]) == 2:
                     calc_numbers_lst[i] = ['0', int_numbers_lst[i][0], int_numbers_lst[i][1], '']
                 if calc_numbers_lst[i][0][0] == '-' or calc_numbers_lst[i][1][0] == '-':
@@ -726,7 +729,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     right_brokes += 1
                     calc_number[0] = calc_number[0].replace(')', '', 1)
                     brokes[i].append(')')
-                if calc_number[0][0] == '-':
+                if '-' in [calc_number[0][0], calc_number[1][0]]:
                     calc_numbers_lst[i] = [calc_number[0], calc_number[1], calc_number[2], False]
                 else:
                     calc_numbers_lst[i] = [calc_number[0], calc_number[1], calc_number[2], True]

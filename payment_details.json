@@ -2,16 +2,19 @@
   {
     "title": "Покупка абонемента",
     "description": "Оплатите абонемент на неделю",
-    "price": 100
+    "price": 100,
+    "number_lessons": 2
   },
   {
     "title": "Покупка абонемента",
     "description": "Оплатите абонемент на месяц",
-    "price": 500
+    "price": 500,
+    "number_lessons": 8
   },
   {
     "title": "Покупка абонемента",
     "description": "Оплатите абонемент на год",
-    "price": 1000
+    "price": 1000,
+    "number_lessons": 72
   }
 ]

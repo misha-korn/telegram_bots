@@ -46,8 +46,10 @@ def create_bd(path):
 # cursor.execute(f'INSERT INTO lessons VALUES(Null, "2024-04-20")')
 # conn.commit()
 
-
+# conn = sqlite3.connect('inline_menu_bot_db.sqlite3')
+# cursor = conn.cursor()
 # cursor.execute(f'INSERT INTO users VALUES(120, "Egor")')
+# print(cursor.fetchone())
 # conn.commit()
 # print(cursor.execute('SELECT * FROM payments WHERE sum = 6000 AND user_id = 12421').fetchall())
 

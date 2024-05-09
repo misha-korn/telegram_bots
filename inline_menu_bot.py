@@ -10,10 +10,14 @@ from config import config_3
 from templates import keyboard_start
 import json
 
+# Enable logging
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
+# set higher logging level for httpx to avoid all GET and POST requests being logged
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
+logger = logging.getLogger(__name__)
 
 PAYMENT_PROVIDER_TOKEN = '381764678:TEST:82184'
 
@@ -27,6 +31,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard_start)
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Вы попали на шахматный кружок!",
                                    reply_markup=reply_markup)
+
+    with sqlite3.connect('inline_menu_bot_db.sqlite3') as conn:
+        cursor = conn.cursor()
+        user_list = cursor.execute(
+            f'SELECT id FROM users WHERE id = {update.effective_user.id}')
+        if not user_list.fetchone():
+            cursor.execute(
+                f'INSERT INTO users VALUES({update.effective_user.id}, "{update.effective_user.username}")')
+            conn.commit()
     return CHOOSE_ACTION
 
 
@@ -106,7 +119,20 @@ async def subscription_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     query = update.callback_query
     await query.answer()
-    await query.edit_message_text('абонемент', reply_markup=reply_markup)
+    text_subscription = 'Ваши абонементы:'
+
+    conn = sqlite3.connect('inline_menu_bot_db.sqlite3')
+    cursor = conn.cursor()
+    abonements = cursor.execute(f'SELECT count_lessons FROM abonements WHERE user_id = "{update.effective_user.id}"').fetchall()
+    payments = cursor.execute(f'SELECT sum FROM payments WHERE user_id = "{update.effective_user.id}"').fetchall()
+    
+    for i in range(len(abonements)):
+        text_subscription = f'{text_subscription}\n{i+1}. {int(abonements[i][0])} уроков, стоимостью {int(payments[i][0]/100)} рублей.'
+    
+    if len(abonements) == 0:
+        text_subscription = 'У вас нет абонементов'
+
+    await query.edit_message_text(text_subscription, reply_markup=reply_markup)
     return SUBSCRIPTION
 
 
@@ -145,7 +171,7 @@ async def start_without_shipping_callback(
     # if query.data ==
     title = payment_info[int(query.data)]['title']
     description = payment_info[int(query.data)]['description']
-    payload = "Custom-Payload"
+    payload = f"{payment_info[int(query.data)]['number_lessons']}"
     currency = "RUB"
     price = payment_info[int(query.data)]['price']
     prices = [LabeledPrice("Test", price * 100)]
@@ -158,7 +184,7 @@ async def precheckout_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     """Answers the PreQecheckoutQuery"""
     query = update.pre_checkout_query
     # check the payload, is this from your bot?
-    if query.invoice_payload != "Custom-Payload":
+    if query.invoice_payload not in ['2','8','72']:
         # answer False pre_checkout_query
         await query.answer(ok=False, error_message="Что-то пошло не так...")
     else:
@@ -172,13 +198,26 @@ async def successful_payment_callback(update: Update, context: ContextTypes.DEFA
     with sqlite3.connect('inline_menu_bot_db.sqlite3') as conn:
         cursor = conn.cursor()
         cursor.execute(f'INSERT INTO payments VALUES(NULL, {update.effective_user.id}, {update.effective_message.successful_payment.total_amount})')
+        pay_id = cursor.execute(f'SELECT seq FROM sqlite_sequence WHERE name="payments"').fetchone()[0]
+        number_lessons = int(update.effective_message.successful_payment.invoice_payload)
+        cursor.execute(f'INSERT INTO abonements VALUES(NULL, {update.effective_user.id}, {pay_id}, {number_lessons})')
         conn.commit()
+
+def created_8_lessons() -> None:
+    conn = sqlite3.connect('inline_menu_bot_db.sqlite3')
+    cursor = conn.cursor()
+    #2024-05-20
+    #2024-05-22
+    for i in range(8):
+        cursor.execute(f'INSERT INTO lessons VALUES(NULL, "2024-05-{20+(i*2)}") ')
+    conn.commit()
 
 
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(config_3['token']).build()
     create_bd('inline_menu_bot_db.sqlite3')
+    # created_8_lessons()
     conv_hand = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
