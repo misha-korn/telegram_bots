@@ -6,9 +6,15 @@ import sqlite3
 
 # Настраиваем интерфейс логирования
 logging.basicConfig(
+    filename='calculator_log.txt',
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
+
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
+logger = logging.getLogger(__name__)
+
 state = {}
 
 
@@ -285,9 +291,15 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                                     True]
             if state[update.effective_user.id]['numbers_in_a_power'][0][0] == '-':
                 power_number[3] = False
+            if power_number[3]:
+                power_number[3] = ''
+            else:
+                power_number[3] = '-'
             result_a_power = power_number
+            first_result_a_power = result_a_power
+            # print(first_result_a_power, 'first_result_a_power')
             for i in range(state[update.effective_user.id]['power'] - 1):
-                result_a_power = arithmetic_operations(result_a_power, result_a_power, '*')
+                result_a_power = arithmetic_operations(result_a_power, first_result_a_power, '*')
                 if int(result_a_power[1]) >= 5000000 or int(result_a_power[2]) >= 5000000:
                     await context.bot.send_message(chat_id=update.effective_chat.id, text='Числитель в результате '
                                                                                           'слишком большой, '

@@ -6,3 +6,5 @@ config_2 = {"token":"6774906427:AAG8pfCnIsKBDvBuBPJg42wS_pO90x-cexU"}
 config_3 = {"token":"6658273201:AAHuwzqVF7EyHB1WdEp8RJSFMoJgyYHb3c4"}
 #calc_136_bot
 config_4 = {"token":"6995737865:AAFhAW8qSc7js31vm_lzAvAVd-DeK1ZsZ5E"}
+#rep_bot
+config_5 = {"token":"7020785950:AAEwluzXe8acYQUuRJUDQjgeqSUx1n0IjlY"}
