@@ -1,9 +1,5 @@
-day_of_week = {
-    1: "Понедельник",
-    2: "Вторник",
-    3: "Среда",
-    4: "Четверг",
-    5: "Пятница",
-    6: "Суббота",
-    7: "Воскресенье",
-}
+for i in range(8):
+    name = f"gleb{i}"
+
+    cursor.execute(f'INSERT INTO users VALUES({87654321+i}, "{name}", {0})')
+conn.commit()

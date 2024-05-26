@@ -6,7 +6,7 @@ import sqlite3
 
 # Настраиваем интерфейс логирования
 logging.basicConfig(
-    filename='calculator_log.txt',
+    filename="calculator_log.txt",
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
@@ -221,6 +221,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                                                                               resize_keyboard=True,
                                                                                               one_time_keyboard=True))
     state[update.effective_user.id] = {'dia_stat': 0}
+    logger.info(f'/start {update.effective_user.username} {update.effective_user.id}')
 
 
 async def sort(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -269,6 +270,10 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
         text_error = 'К сожалению, мы не можем обработать данную дробь или число.😢'
         try:
             state[update.effective_user.id]['power'] = int(update.effective_message.text)
+
+            logger.info(f'/exponentation {update.effective_user.username} {update.effective_user.id}\n'
+                        f'{state[update.effective_user.id]["numbers_in_a_power"]} '
+                        f'{state[update.effective_user.id]["power"]}')
 
             power_number = []
             if len(state[update.effective_user.id]['numbers_in_a_power']) == 2:
@@ -354,6 +359,10 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
         text_error = 'К сожалению, мы не можем сократить данную дробь.😢'
         try:
             state[update.effective_user.id]['reduction_of_fractions_number'] = update.effective_message.text.split(' ')
+
+            logger.info(f'/reduction {update.effective_user.username} {update.effective_user.id}\n'
+                        f'{state[update.effective_user.id]["reduction_of_fractions_number"]}')
+
             reduction_number = []
             if len(state[update.effective_user.id]['reduction_of_fractions_number']) == 2:
                 reduction_number = [int(state[update.effective_user.id]['reduction_of_fractions_number'][0]),
@@ -427,6 +436,11 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
         text_error = 'К сожалению, мы не можем обработать эти числа.😢'
         try:
             state[update.effective_user.id]['how_sort'] = update.effective_message.text
+
+            logger.info(f'/sort {update.effective_user.username} {update.effective_user.id}\n'
+                        f'{state[update.effective_user.id]["numbers_sort"]} '
+                        f'{state[update.effective_user.id]["how_sort"]}')
+
             state[update.effective_user.id]['dia_stat'] = 'sort_1'
             how_sort = state[update.effective_user.id]['how_sort']
             old_numbers_sort_str = state[update.effective_user.id]['numbers_sort']
@@ -543,6 +557,10 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
         text_error = 'К сожалению, мы не можем обработать эти числа.😢'
         try:
             numbers_nod = update.effective_message.text.split(' ')
+
+            logger.info(f'/nod {update.effective_user.username} {update.effective_user.id}\n'
+                        f'{numbers_nod}')
+
             if float(numbers_nod[0]) % 1 != 0 or float(numbers_nod[1]) % 1 != 0:
                 await context.bot.send_message(chat_id=update.effective_chat.id,
                                                text='Введите 2 целых числа')
@@ -587,6 +605,10 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
         text_error = 'К сожалению, мы не можем обработать эти числа.😢'
         try:
             numbers_nok = update.effective_message.text.split(' ')
+
+            logger.info(f'/nok {update.effective_user.username} {update.effective_user.id}\n'
+                        f'{numbers_nok}')
+
             if float(numbers_nok[0]) % 1 != 0 or float(numbers_nok[1]) % 1 != 0:
                 await context.bot.send_message(chat_id=update.effective_chat.id,
                                                text='Введите 2 целых числа')
@@ -647,6 +669,10 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
             # error()
             # Ввод
             lst = update.effective_message.text.split(' ')
+
+            logger.info(f'/calculations {update.effective_user.username} {update.effective_user.id}\n'
+                        f'{lst}')
+
             if len(lst) // 2 + 1 >= 200:
                 raise IndexError
             state[update.effective_user.id]['count_numbers'] = (1 + lst.count('-') + lst.count('+') + lst.count('/') +
@@ -700,14 +726,14 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 if len(int_numbers_lst[i]) == 3:
                     calc_numbers_lst[i] = [int_numbers_lst[i][0], int_numbers_lst[i][1], int_numbers_lst[i][2], '']
                 elif len(int_numbers_lst[i]) == 1:
-                    if not len(int_numbers_lst[i][0].split(',')) == 2:
+                    if not len(int_numbers_lst[i][0].split('.')) == 2:
                         calc_numbers_lst[i] = [int_numbers_lst[i][0], '0', '1', '']
                     else:
                         decimal_part = 1
-                        for j in range(len(str(int_numbers_lst[i][0].split(',')[1]))):
+                        for j in range(len(str(int_numbers_lst[i][0].split('.')[1]))):
                             decimal_part *= 10
-                        calc_numbers_lst[i] = [int_numbers_lst[i][0].split(',')[0],
-                                               int_numbers_lst[i][0].split(',')[1],
+                        calc_numbers_lst[i] = [int_numbers_lst[i][0].split('.')[0],
+                                               int_numbers_lst[i][0].split('.')[1],
                                                str(decimal_part), '']
                 elif len(int_numbers_lst[i]) == 2:
                     calc_numbers_lst[i] = ['0', int_numbers_lst[i][0], int_numbers_lst[i][1], '']

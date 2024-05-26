@@ -1,18 +1,17 @@
-2024-05-15 20:19:25,422 - apscheduler.scheduler - INFO - Scheduler started
-2024-05-15 20:19:25,422 - telegram.ext.Application - INFO - Application started
-2024-05-15 20:19:50,703 - telegram.ext.Application - INFO - Application is stopping. This might take a moment.
-2024-05-15 20:19:50,704 - apscheduler.scheduler - INFO - Scheduler has been shut down
-2024-05-15 20:19:50,714 - telegram.ext.Application - INFO - Application.stop() complete
-2024-05-15 20:19:51,752 - apscheduler.scheduler - INFO - Scheduler started
-2024-05-15 20:19:51,752 - telegram.ext.Application - INFO - Application started
-2024-05-15 20:20:32,681 - apscheduler.scheduler - INFO - Scheduler started
-2024-05-15 20:20:32,681 - telegram.ext.Application - INFO - Application started
-2024-05-15 20:21:18,099 - apscheduler.scheduler - INFO - Scheduler started
-2024-05-15 20:21:18,099 - telegram.ext.Application - INFO - Application started
-2024-05-15 20:22:25,808 - apscheduler.scheduler - INFO - Scheduler started
-2024-05-15 20:22:25,808 - telegram.ext.Application - INFO - Application started
-2024-05-15 20:22:34,396 - telegram.ext.Application - INFO - Application is stopping. This might take a moment.
-2024-05-15 20:22:34,396 - apscheduler.scheduler - INFO - Scheduler has been shut down
-2024-05-15 20:22:34,406 - telegram.ext.Application - INFO - Application.stop() complete
-2024-05-15 20:23:06,843 - apscheduler.scheduler - INFO - Scheduler started
-2024-05-15 20:23:06,843 - telegram.ext.Application - INFO - Application started
+2024-05-18 15:13:12,878 - apscheduler.scheduler - INFO - Scheduler started
+2024-05-18 15:13:12,878 - telegram.ext.Application - INFO - Application started
+2024-05-18 15:13:14,977 - __main__ - INFO - /start michaelizh 5090944878
+2024-05-18 15:13:21,637 - __main__ - INFO - /calculations michaelizh 5090944878
+['5', '5/6', '-', '0', '2/7', '+', '1', '3/7']
+2024-05-18 15:13:25,789 - __main__ - INFO - /reduction michaelizh 5090944878
+['15/5']
+2024-05-18 15:13:32,354 - __main__ - INFO - /exponentation michaelizh 5090944878
+['2'] 3
+2024-05-18 15:13:40,207 - __main__ - INFO - /nod michaelizh 5090944878
+['2']
+2024-05-18 15:13:44,278 - __main__ - INFO - /nod michaelizh 5090944878
+['2', '10']
+2024-05-18 15:13:53,574 - __main__ - INFO - /nok michaelizh 5090944878
+['2', '12']
+2024-05-18 15:14:09,723 - __main__ - INFO - /sort michaelizh 5090944878
+['-1 1/5', ' 6', ' -01/2'] по возрастанию

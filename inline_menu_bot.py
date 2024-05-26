@@ -1,7 +1,7 @@
 import logging
 import sqlite3
 import pytz
-
+from telegram.constants import ParseMode
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, LabeledPrice
 from telegram.ext import (
     ApplicationBuilder,
@@ -62,6 +62,12 @@ day_of_week = {
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print(context.args)
+    if context.args:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=f"->{context.args}",
+        )
     reply_markup = InlineKeyboardMarkup(keyboard_start)
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
@@ -69,12 +75,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=reply_markup,
     )
 
-    context.job_queue.run_repeating(
-        hello,
-        datetime.timedelta(seconds=30),
-        chat_id=update.effective_chat.id,
-        data={"name": update.effective_user.full_name},
-    )
+    # context.job_queue.run_repeating(
+    #     hello,
+    #     datetime.timedelta(seconds=30),
+    #     chat_id=update.effective_chat.id,
+    #     data={"name": update.effective_user.full_name},
+    # )
 
     # context.job_queue.run_repeating(
     #     hello,
@@ -200,13 +206,24 @@ async def sign_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     today_d = today_d.strftime("%Y-%m-%d")  # '2024-05-12'
     next_month_d = next_month_d.strftime("%Y-%m-%d")
     data_lessons = cursor.execute(
-        f'SELECT date_lessons FROM lessons WHERE date_lessons >= "{today_d}" and date_lessons <= "{next_month_d}"'
+        f'SELECT id, date_lessons FROM lessons WHERE date_lessons >= "{today_d}" and date_lessons <= "{next_month_d}"'
     ).fetchall()
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="[Йоу](https://t.me/test_korn_bot?start=4orange)",
+        parse_mode=ParseMode.MARKDOWN_V2,
+    )
     for n, lesson in enumerate(data_lessons):
-        text_sign = f"{text_sign}\n{n+1}. {lesson[0]}."
+        text_sign = f"{text_sign}\n{n+1}. [{lesson[1]}](https://t.me/test_korn_bot?start=sign_les_{lesson[0]})."
+    text_sign = text_sign.replace(".", "\.")
+    text_sign = text_sign.replace("-", "\-")
     if len(data_lessons) == 0:
         text_subscription = "У вас нет доступных уроков для записи"
-    await query.edit_message_text(text_sign, reply_markup=reply_markup)
+    await query.edit_message_text(
+        text_sign,
+        reply_markup=reply_markup,
+        parse_mode=ParseMode.MARKDOWN_V2,
+    )
     return SIGN
 
 
