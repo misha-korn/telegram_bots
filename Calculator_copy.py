@@ -1,14 +1,26 @@
 import logging
-from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters, CallbackQueryHandler
+from telegram import (
+    Update,
+    ReplyKeyboardMarkup,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+)
+from telegram.ext import (
+    ApplicationBuilder,
+    ContextTypes,
+    CommandHandler,
+    MessageHandler,
+    filters,
+    CallbackQueryHandler,
+)
 from config import config_3, config_4
 import sqlite3
 
 # Настраиваем интерфейс логирования
 logging.basicConfig(
     filename="calculator_log.txt",
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
 )
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -18,15 +30,22 @@ logger = logging.getLogger(__name__)
 state = {}
 
 
-def arifmetic_operations_div_mult(calc_actions_div_multi, calc_actions, calc_numbers_lst):
+def arifmetic_operations_div_mult(
+    calc_actions_div_multi, calc_actions, calc_numbers_lst
+):
     # Умножение и деление должно быть в приоритете
     # print(calc_numbers_lst, 'calc_numbers_lst1')
     num_div_mult = 0
     for i in range(len(calc_actions_div_multi)):
-        if calc_numbers_lst[calc_actions_div_multi[i]] and calc_numbers_lst[calc_actions_div_multi[i] + 1]:
-            num_div_mult = arithmetic_operations(calc_numbers_lst[calc_actions_div_multi[i]],
-                                                 calc_numbers_lst[calc_actions_div_multi[i] + 1],
-                                                 calc_actions[calc_actions_div_multi[i]])
+        if (
+            calc_numbers_lst[calc_actions_div_multi[i]]
+            and calc_numbers_lst[calc_actions_div_multi[i] + 1]
+        ):
+            num_div_mult = arithmetic_operations(
+                calc_numbers_lst[calc_actions_div_multi[i]],
+                calc_numbers_lst[calc_actions_div_multi[i] + 1],
+                calc_actions[calc_actions_div_multi[i]],
+            )
             # print(calc_numbers_lst[calc_actions_div_multi[i] + 1], calc_actions[calc_actions_div_multi[i]],
             #       calc_numbers_lst[calc_actions_div_multi[i]])
             # print(num_div_mult, 'num_div_mult1')
@@ -35,14 +54,25 @@ def arifmetic_operations_div_mult(calc_actions_div_multi, calc_actions, calc_num
             j = 0
             while j < len(calc_actions):
                 sokr_biggest = sokrashenie_biggest(num_div_mult[1], num_div_mult[2])
-                num_div_mult[1], num_div_mult[2] = int(sokr_biggest[0]), int(sokr_biggest[1])
+                num_div_mult[1], num_div_mult[2] = (
+                    int(sokr_biggest[0]),
+                    int(sokr_biggest[1]),
+                )
                 j += 1
-            if num_div_mult[3] == '-':
-                calc_numbers_lst[calc_actions_div_multi[i] + 1] = [num_div_mult[0], num_div_mult[1], num_div_mult[2],
-                                                                   False]
+            if num_div_mult[3] == "-":
+                calc_numbers_lst[calc_actions_div_multi[i] + 1] = [
+                    num_div_mult[0],
+                    num_div_mult[1],
+                    num_div_mult[2],
+                    False,
+                ]
             else:
-                calc_numbers_lst[calc_actions_div_multi[i] + 1] = [num_div_mult[0], num_div_mult[1], num_div_mult[2],
-                                                                   True]
+                calc_numbers_lst[calc_actions_div_multi[i] + 1] = [
+                    num_div_mult[0],
+                    num_div_mult[1],
+                    num_div_mult[2],
+                    True,
+                ]
     # print(calc_numbers_lst, 'calc_numbers_lst2')
     # print(num_div_mult, 'num_div_mult2')
     calc_numbers_lst_copy = calc_numbers_lst.copy()
@@ -63,7 +93,7 @@ def arifmetic_operations_div_mult(calc_actions_div_multi, calc_actions, calc_num
         while j < len(calc_actions):
             second_num = calc_numbers_lst[j + 1]
             result = arithmetic_operations(first_num, second_num, calc_actions[j])
-            if result[3] == '-':
+            if result[3] == "-":
                 first_num = [result[0], result[1], result[2], False]
             else:
                 first_num = [result[0], result[1], result[2], True]
@@ -79,40 +109,42 @@ def arithmetic_operations(first_num, second_num, action):
     result = []
     first_num = checking_for_positivity(first_num)
     second_num = checking_for_positivity(second_num)
-    if action == '+':
+    if action == "+":
         if first_num[3] and second_num[3]:
             result = addition(first_num, second_num)
         elif first_num[3]:
             result = subtraction(first_num, second_num)
             if not bigger_smaller(first_num, second_num):
-                result[3] = '-'
+                result[3] = "-"
         elif second_num[3]:
             result = subtraction(first_num, second_num)
             if bigger_smaller(first_num, second_num):
-                result[3] = '-'
+                result[3] = "-"
         else:
             result = addition(first_num, second_num)
-            result[3] = '-'
-    elif action == '-':
+            result[3] = "-"
+    elif action == "-":
         if first_num[3] and second_num[3]:
             result = subtraction(first_num, second_num)
             if not bigger_smaller(first_num, second_num):
-                result[3] = '-'
+                result[3] = "-"
         elif first_num[3]:
             result = addition(first_num, second_num)
         elif second_num[3]:
             result = addition(first_num, second_num)
-            result[3] = '-'
+            result[3] = "-"
         else:
             result = subtraction(first_num, second_num)
             if bigger_smaller(first_num, second_num):
-                result[3] = '-'
-    elif action == '*':
-        result = [0,
-                  (first_num[1] + first_num[0] * first_num[2]) * (
-                          second_num[1] + second_num[0] * second_num[2]),
-                  first_num[2] * second_num[2],
-                  '']
+                result[3] = "-"
+    elif action == "*":
+        result = [
+            0,
+            (first_num[1] + first_num[0] * first_num[2])
+            * (second_num[1] + second_num[0] * second_num[2]),
+            first_num[2] * second_num[2],
+            "",
+        ]
         # print(result, 'result1')
         result = checking_for_positivity(result)
         # print(result, 'result2')
@@ -120,23 +152,25 @@ def arithmetic_operations(first_num, second_num, action):
             result[0] += result[1] // result[2]
             result[1] -= result[2] * (result[1] // result[2])
         if (first_num[3] and not second_num[3]) or (not first_num[3] and second_num[3]):
-            result[3] = '-'
-    elif action in ['/', ':']:
-        result = [0,
-                  (first_num[1] + first_num[0] * first_num[2]) * (second_num[2]),
-                  (first_num[2]) * (second_num[1] + second_num[0] * second_num[2]),
-                  '']
+            result[3] = "-"
+    elif action in ["/", ":"]:
+        result = [
+            0,
+            (first_num[1] + first_num[0] * first_num[2]) * (second_num[2]),
+            (first_num[2]) * (second_num[1] + second_num[0] * second_num[2]),
+            "",
+        ]
         result = checking_for_positivity(result)
         if result[1] >= result[2]:
             result[0] += result[1] // result[2]
             result[1] -= result[2] * (result[1] // result[2])
         if (first_num[3] and not second_num[3]) or (not first_num[3] and second_num[3]):
-            result[3] = '-'
+            result[3] = "-"
     return result
 
 
 def znam(num):
-    return len(num.split('/')) == 1
+    return len(num.split("/")) == 1
 
 
 def checking_for_positivity(result):
@@ -154,18 +188,21 @@ def error():
 def bigger_smaller(first_num, second_num):
     first_num = checking_for_positivity(first_num)
     second_num = checking_for_positivity(second_num)
-    return (first_num[0] * first_num[2] + first_num[1]) * second_num[2] > \
-        (second_num[0] * second_num[2] + second_num[1]) * first_num[2]
+    return (first_num[0] * first_num[2] + first_num[1]) * second_num[2] > (
+        second_num[0] * second_num[2] + second_num[1]
+    ) * first_num[2]
 
 
 def subtraction(first_num, second_num):
     first_num = checking_for_positivity(first_num)
     second_num = checking_for_positivity(second_num)
-    result = [0,
-              (first_num[0] * first_num[2] + first_num[1]) * second_num[2] -
-              (second_num[0] * second_num[2] + second_num[1]) * first_num[2],
-              first_num[2] * second_num[2],
-              '']
+    result = [
+        0,
+        (first_num[0] * first_num[2] + first_num[1]) * second_num[2]
+        - (second_num[0] * second_num[2] + second_num[1]) * first_num[2],
+        first_num[2] * second_num[2],
+        "",
+    ]
     result = checking_for_positivity(result)
     if result[1] >= result[2]:
         result[0] += result[1] // result[2]
@@ -176,11 +213,13 @@ def subtraction(first_num, second_num):
 def addition(first_num, second_num):
     first_num = checking_for_positivity(first_num)
     second_num = checking_for_positivity(second_num)
-    result = [0,
-              (first_num[0] * first_num[2] + first_num[1]) * second_num[2] +
-              (second_num[0] * second_num[2] + second_num[1]) * first_num[2],
-              first_num[2] * second_num[2],
-              '']
+    result = [
+        0,
+        (first_num[0] * first_num[2] + first_num[1]) * second_num[2]
+        + (second_num[0] * second_num[2] + second_num[1]) * first_num[2],
+        first_num[2] * second_num[2],
+        "",
+    ]
     result = checking_for_positivity(result)
     if result[1] >= result[2]:
         result[0] += result[1] // result[2]
@@ -215,287 +254,473 @@ def sokrashenie_biggest(result_1, result_2):
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [['/calculations'], ['/reduction', '/exponentiation'], ['/nod', '/nok', '/sort']]
-    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text="Выберите действие", reply_markup=ReplyKeyboardMarkup(keyboard,
-                                                                                              resize_keyboard=True,
-                                                                                              one_time_keyboard=True))
-    state[update.effective_user.id] = {'dia_stat': 0}
-    logger.info(f'/start {update.effective_user.username} {update.effective_user.id}')
+    keyboard = [
+        ["/calculations"],
+        ["/reduction", "/exponentiation"],
+        ["/nod", "/nok", "/sort"],
+    ]
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="Выберите действие",
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard, resize_keyboard=True, one_time_keyboard=True
+        ),
+    )
+    state[update.effective_user.id] = {"dia_stat": 0}
+    logger.info(f"/start {update.effective_user.username} {update.effective_user.id}")
 
 
 async def sort(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    state[update.effective_user.id]['dia_stat'] = 'sort_1'
-    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text="Введите числа или дроби ЧЕРЕЗ ЗАПЯТУЮ, чтобы я их отсортировал")
+    state[update.effective_user.id]["dia_stat"] = "sort_1"
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="Введите числа или дроби ЧЕРЕЗ ЗАПЯТУЮ, чтобы я их отсортировал",
+    )
 
 
 async def calc(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    state[update.effective_user.id]['dia_stat'] = 1
-    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text="Введите пример. Вот пример записи 5 5/6 - 0 2/7 + 1 3/7")
+    state[update.effective_user.id]["dia_stat"] = 1
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="Введите пример. Вот пример записи 5 5/6 - 0 2/7 + 1 3/7",
+    )
 
 
 async def nod(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    state[update.effective_user.id]['dia_stat'] = 'nod_1'
-    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text="Введите 2 целых числа, чтобы я сказал вам их НОД")
+    state[update.effective_user.id]["dia_stat"] = "nod_1"
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="Введите 2 целых числа, чтобы я сказал вам их НОД",
+    )
 
 
 async def nok(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    state[update.effective_user.id]['dia_stat'] = 'nok_1'
-    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text="Введите 2 целых числа, чтобы я сказал вам их НОК")
+    state[update.effective_user.id]["dia_stat"] = "nok_1"
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="Введите 2 целых числа, чтобы я сказал вам их НОК",
+    )
 
 
 async def reduction_of_fractions(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    state[update.effective_user.id]['dia_stat'] = 'reduction_1'
-    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text="Введите 1 дробь, чтобы я её сократил")
+    state[update.effective_user.id]["dia_stat"] = "reduction_1"
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id, text="Введите 1 дробь, чтобы я её сократил"
+    )
 
 
 async def a_number_in_a_power(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    state[update.effective_user.id]['dia_stat'] = 'a_number_in_a_power_1'
-    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text="Введите дробь или число, чтобы я её возвёл в степень")
+    state[update.effective_user.id]["dia_stat"] = "a_number_in_a_power_1"
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="Введите дробь или число, чтобы я её возвёл в степень",
+    )
 
 
 async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # error()
-    if state[update.effective_user.id]['dia_stat'] == 'a_number_in_a_power_1':
-        state[update.effective_user.id]['numbers_in_a_power'] = update.effective_message.text.split(' ')
-        state[update.effective_user.id]['dia_stat'] = 'a_number_in_a_power_2'
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="В какую степень нужно возвести дробь?")
-    elif state[update.effective_user.id]['dia_stat'] == 'a_number_in_a_power_2':
-        text_error = 'К сожалению, мы не можем обработать данную дробь или число.😢'
+    if state[update.effective_user.id]["dia_stat"] == "a_number_in_a_power_1":
+        state[update.effective_user.id]["numbers_in_a_power"] = (
+            update.effective_message.text.split(" ")
+        )
+        state[update.effective_user.id]["dia_stat"] = "a_number_in_a_power_2"
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="В какую степень нужно возвести дробь?",
+        )
+    elif state[update.effective_user.id]["dia_stat"] == "a_number_in_a_power_2":
+        text_error = "К сожалению, мы не можем обработать данную дробь или число.😢"
         try:
-            state[update.effective_user.id]['power'] = int(update.effective_message.text)
+            state[update.effective_user.id]["power"] = int(
+                update.effective_message.text
+            )
 
-            logger.info(f'/exponentation {update.effective_user.username} {update.effective_user.id}\n'
-                        f'{state[update.effective_user.id]["numbers_in_a_power"]} '
-                        f'{state[update.effective_user.id]["power"]}')
+            logger.info(
+                f'/exponentation {update.effective_user.username} {update.effective_user.id}\n'
+                f'{state[update.effective_user.id]["numbers_in_a_power"]} '
+                f'{state[update.effective_user.id]["power"]}'
+            )
 
             power_number = []
-            if len(state[update.effective_user.id]['numbers_in_a_power']) == 2:
-                power_number = [int(state[update.effective_user.id]['numbers_in_a_power'][0]),
-                                int(state[update.effective_user.id]['numbers_in_a_power'][1].split('/')[0]),
-                                int(state[update.effective_user.id]['numbers_in_a_power'][1].split('/')[1]),
-                                True]
-            elif len(state[update.effective_user.id]['numbers_in_a_power']) == 1:
-                if len(state[update.effective_user.id]['numbers_in_a_power'][0].split('/')) == 2:
-                    power_number = [0,
-                                    int(state[update.effective_user.id]['numbers_in_a_power'][0].split('/')[
-                                            0]),
-                                    int(state[update.effective_user.id]['numbers_in_a_power'][0].split('/')[
-                                            1]),
-                                    True]
-                elif len(state[update.effective_user.id]['numbers_in_a_power'][0].split('/')) == 1:
-                    power_number = [int(state[update.effective_user.id]['numbers_in_a_power'][0]),
-                                    0,
-                                    1,
-                                    True]
-            if state[update.effective_user.id]['numbers_in_a_power'][0][0] == '-':
+            if len(state[update.effective_user.id]["numbers_in_a_power"]) == 2:
+                power_number = [
+                    int(state[update.effective_user.id]["numbers_in_a_power"][0]),
+                    int(
+                        state[update.effective_user.id]["numbers_in_a_power"][1].split(
+                            "/"
+                        )[0]
+                    ),
+                    int(
+                        state[update.effective_user.id]["numbers_in_a_power"][1].split(
+                            "/"
+                        )[1]
+                    ),
+                    True,
+                ]
+            elif len(state[update.effective_user.id]["numbers_in_a_power"]) == 1:
+                if (
+                    len(
+                        state[update.effective_user.id]["numbers_in_a_power"][0].split(
+                            "/"
+                        )
+                    )
+                    == 2
+                ):
+                    power_number = [
+                        0,
+                        int(
+                            state[update.effective_user.id]["numbers_in_a_power"][
+                                0
+                            ].split("/")[0]
+                        ),
+                        int(
+                            state[update.effective_user.id]["numbers_in_a_power"][
+                                0
+                            ].split("/")[1]
+                        ),
+                        True,
+                    ]
+                elif (
+                    len(
+                        state[update.effective_user.id]["numbers_in_a_power"][0].split(
+                            "/"
+                        )
+                    )
+                    == 1
+                ):
+                    power_number = [
+                        int(state[update.effective_user.id]["numbers_in_a_power"][0]),
+                        0,
+                        1,
+                        True,
+                    ]
+            if state[update.effective_user.id]["numbers_in_a_power"][0][0] == "-":
                 power_number[3] = False
             if power_number[3]:
-                power_number[3] = ''
+                power_number[3] = ""
             else:
-                power_number[3] = '-'
+                power_number[3] = "-"
             result_a_power = power_number
             first_result_a_power = result_a_power
             # print(first_result_a_power, 'first_result_a_power')
-            for i in range(state[update.effective_user.id]['power'] - 1):
-                result_a_power = arithmetic_operations(result_a_power, first_result_a_power, '*')
-                if int(result_a_power[1]) >= 5000000 or int(result_a_power[2]) >= 5000000:
-                    await context.bot.send_message(chat_id=update.effective_chat.id, text='Числитель в результате '
-                                                                                          'слишком большой, '
-                                                                                          'поэтому мы не можем '
-                                                                                          'сократить полученную дробь.')
-                    state[update.effective_user.id]['dia_stat'] = 'a_number_in_a_power_1'
+            for i in range(state[update.effective_user.id]["power"] - 1):
+                result_a_power = arithmetic_operations(
+                    result_a_power, first_result_a_power, "*"
+                )
+                if (
+                    int(result_a_power[1]) >= 5000000
+                    or int(result_a_power[2]) >= 5000000
+                ):
+                    await context.bot.send_message(
+                        chat_id=update.effective_chat.id,
+                        text="Числитель в результате "
+                        "слишком большой, "
+                        "поэтому мы не можем "
+                        "сократить полученную дробь.",
+                    )
+                    state[update.effective_user.id]["dia_stat"] = (
+                        "a_number_in_a_power_1"
+                    )
                     raise IndexError
                 sokr_biggest = sokrashenie_biggest(result_a_power[1], result_a_power[2])
-                result_a_power[1], result_a_power[2] = int(sokr_biggest[0]), int(sokr_biggest[1])
-            state[update.effective_user.id]['dia_stat'] = 'a_number_in_a_power_1'
+                result_a_power[1], result_a_power[2] = (
+                    int(sokr_biggest[0]),
+                    int(sokr_biggest[1]),
+                )
+            state[update.effective_user.id]["dia_stat"] = "a_number_in_a_power_1"
             # print(result_a_power)
             if result_a_power[3] == True:
-                result_a_power[3] = ''
+                result_a_power[3] = ""
             elif result_a_power[3] == False:
-                if str(result_a_power[0])[0] == '-':
+                if str(result_a_power[0])[0] == "-":
                     result_a_power[0] *= -1
-                elif str(result_a_power[1])[0] == '-':
+                elif str(result_a_power[1])[0] == "-":
                     result_a_power[1] *= -1
-                result_a_power[3] = '-'
+                result_a_power[3] = "-"
             if result_a_power[1] >= result_a_power[2]:
                 result_a_power[0] += result_a_power[1] // result_a_power[2]
-                result_a_power[1] -= result_a_power[2] * (result_a_power[1] // result_a_power[2])
+                result_a_power[1] -= result_a_power[2] * (
+                    result_a_power[1] // result_a_power[2]
+                )
             if result_a_power[1] != 0:
-                text = f'{result_a_power[3]}{result_a_power[0]} {result_a_power[1]}/{result_a_power[2]}'
+                text = f"{result_a_power[3]}{result_a_power[0]} {result_a_power[1]}/{result_a_power[2]}"
             else:
-                text = f'{result_a_power[3]}{result_a_power[0]}'
+                text = f"{result_a_power[3]}{result_a_power[0]}"
             await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
         except IndexError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(IndexError)
         except TypeError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(TypeError)
         except ValueError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(ValueError)
         except ZeroDivisionError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(ZeroDivisionError)
         except OverflowError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(OverflowError)
         finally:
-            state[update.effective_user.id]['dia_stat'] = 'a_number_in_a_power_1'
+            state[update.effective_user.id]["dia_stat"] = "a_number_in_a_power_1"
 
-    if state[update.effective_user.id]['dia_stat'] == 'reduction_1':
-        text_error = 'К сожалению, мы не можем сократить данную дробь.😢'
+    if state[update.effective_user.id]["dia_stat"] == "reduction_1":
+        text_error = "К сожалению, мы не можем сократить данную дробь.😢"
         try:
-            state[update.effective_user.id]['reduction_of_fractions_number'] = update.effective_message.text.split(' ')
+            state[update.effective_user.id]["reduction_of_fractions_number"] = (
+                update.effective_message.text.split(" ")
+            )
 
-            logger.info(f'/reduction {update.effective_user.username} {update.effective_user.id}\n'
-                        f'{state[update.effective_user.id]["reduction_of_fractions_number"]}')
+            logger.info(
+                f'/reduction {update.effective_user.username} {update.effective_user.id}\n'
+                f'{state[update.effective_user.id]["reduction_of_fractions_number"]}'
+            )
 
             reduction_number = []
-            if len(state[update.effective_user.id]['reduction_of_fractions_number']) == 2:
-                reduction_number = [int(state[update.effective_user.id]['reduction_of_fractions_number'][0]),
-                                    int(state[update.effective_user.id]['reduction_of_fractions_number'][1].split('/')[
-                                            0]),
-                                    int(state[update.effective_user.id]['reduction_of_fractions_number'][1].split('/')[
-                                            1]),
-                                    True]
-            elif len(state[update.effective_user.id]['reduction_of_fractions_number']) == 1:
-                if len(state[update.effective_user.id]['reduction_of_fractions_number'][0].split('/')) == 2:
-                    reduction_number = [0,
-                                        int(state[update.effective_user.id]['reduction_of_fractions_number'][0].split(
-                                            '/')[0]),
-                                        int(state[update.effective_user.id]['reduction_of_fractions_number'][0].split(
-                                            '/')[1]),
-                                        True]
-                elif len(state[update.effective_user.id]['reduction_of_fractions_number'][0].split('/')) == 1:
-                    reduction_number = [int(state[update.effective_user.id]['reduction_of_fractions_number'][0]),
-                                        0,
-                                        1,
-                                        True]
-            if update.effective_message.text[0] == '-':
+            if (
+                len(state[update.effective_user.id]["reduction_of_fractions_number"])
+                == 2
+            ):
+                reduction_number = [
+                    int(
+                        state[update.effective_user.id][
+                            "reduction_of_fractions_number"
+                        ][0]
+                    ),
+                    int(
+                        state[update.effective_user.id][
+                            "reduction_of_fractions_number"
+                        ][1].split("/")[0]
+                    ),
+                    int(
+                        state[update.effective_user.id][
+                            "reduction_of_fractions_number"
+                        ][1].split("/")[1]
+                    ),
+                    True,
+                ]
+            elif (
+                len(state[update.effective_user.id]["reduction_of_fractions_number"])
+                == 1
+            ):
+                if (
+                    len(
+                        state[update.effective_user.id][
+                            "reduction_of_fractions_number"
+                        ][0].split("/")
+                    )
+                    == 2
+                ):
+                    reduction_number = [
+                        0,
+                        int(
+                            state[update.effective_user.id][
+                                "reduction_of_fractions_number"
+                            ][0].split("/")[0]
+                        ),
+                        int(
+                            state[update.effective_user.id][
+                                "reduction_of_fractions_number"
+                            ][0].split("/")[1]
+                        ),
+                        True,
+                    ]
+                elif (
+                    len(
+                        state[update.effective_user.id][
+                            "reduction_of_fractions_number"
+                        ][0].split("/")
+                    )
+                    == 1
+                ):
+                    reduction_number = [
+                        int(
+                            state[update.effective_user.id][
+                                "reduction_of_fractions_number"
+                            ][0]
+                        ),
+                        0,
+                        1,
+                        True,
+                    ]
+            if update.effective_message.text[0] == "-":
                 reduction_number[3] = False
-            result_reduction = arithmetic_operations(reduction_number, [1, 0, 1, True], '*')
+            result_reduction = arithmetic_operations(
+                reduction_number, [1, 0, 1, True], "*"
+            )
 
             if int(result_reduction[1]) > 100000 or int(result_reduction[2]) > 100000:
-                await context.bot.send_message(chat_id=update.effective_chat.id,
-                                               text='Числитель, знаменатель или целая часть введённых вами чисел слишком большая...')
+                await context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text="Числитель, знаменатель или целая часть введённых вами чисел слишком большая...",
+                )
                 raise IndexError
 
             sokr_biggest = sokrashenie_biggest(result_reduction[1], result_reduction[2])
-            result_reduction[1], result_reduction[2] = int(sokr_biggest[0]), int(sokr_biggest[1])
+            result_reduction[1], result_reduction[2] = (
+                int(sokr_biggest[0]),
+                int(sokr_biggest[1]),
+            )
             if result_reduction[1] != 0:
-                text = f'{result_reduction[3]}{result_reduction[0]} {result_reduction[1]}/{result_reduction[2]}'
+                text = f"{result_reduction[3]}{result_reduction[0]} {result_reduction[1]}/{result_reduction[2]}"
             else:
-                text = f'{result_reduction[3]}{result_reduction[0]}'
+                text = f"{result_reduction[3]}{result_reduction[0]}"
             # state[update.effective_user.id]['dia_stat'] = 'reduction_0'
             await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
         except IndexError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(IndexError)
         except TypeError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(TypeError)
         except ValueError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(ValueError)
         except ZeroDivisionError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(ZeroDivisionError)
         except OverflowError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(OverflowError)
         finally:
             pass
 
-    if state[update.effective_user.id]['dia_stat'] == 'sort_1':
-        keyboard = [['по возрастанию', 'по убыванию']]
-        state[update.effective_user.id]['numbers_sort'] = update.effective_message.text.replace(',', '_')
-        state[update.effective_user.id]['numbers_sort'] = state[update.effective_user.id]['numbers_sort'].split('_')
-        state[update.effective_user.id]['dia_stat'] = 'sort_2'
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="Как нужно отсортировать?",
-                                       reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True,
-                                                                        one_time_keyboard=True))
-    elif state[update.effective_user.id]['dia_stat'] == 'sort_2':
-        text_error = 'К сожалению, мы не можем обработать эти числа.😢'
+    if state[update.effective_user.id]["dia_stat"] == "sort_1":
+        keyboard = [["по возрастанию", "по убыванию"]]
+        state[update.effective_user.id]["numbers_sort"] = (
+            update.effective_message.text.replace(",", "_")
+        )
+        state[update.effective_user.id]["numbers_sort"] = state[
+            update.effective_user.id
+        ]["numbers_sort"].split("_")
+        state[update.effective_user.id]["dia_stat"] = "sort_2"
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="Как нужно отсортировать?",
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard, resize_keyboard=True, one_time_keyboard=True
+            ),
+        )
+    elif state[update.effective_user.id]["dia_stat"] == "sort_2":
+        text_error = "К сожалению, мы не можем обработать эти числа.😢"
         try:
-            state[update.effective_user.id]['how_sort'] = update.effective_message.text
+            state[update.effective_user.id]["how_sort"] = update.effective_message.text
 
-            logger.info(f'/sort {update.effective_user.username} {update.effective_user.id}\n'
-                        f'{state[update.effective_user.id]["numbers_sort"]} '
-                        f'{state[update.effective_user.id]["how_sort"]}')
+            logger.info(
+                f'/sort {update.effective_user.username} {update.effective_user.id}\n'
+                f'{state[update.effective_user.id]["numbers_sort"]} '
+                f'{state[update.effective_user.id]["how_sort"]}'
+            )
 
-            state[update.effective_user.id]['dia_stat'] = 'sort_1'
-            how_sort = state[update.effective_user.id]['how_sort']
-            old_numbers_sort_str = state[update.effective_user.id]['numbers_sort']
+            state[update.effective_user.id]["dia_stat"] = "sort_1"
+            how_sort = state[update.effective_user.id]["how_sort"]
+            old_numbers_sort_str = state[update.effective_user.id]["numbers_sort"]
             old_numbers_sort_lst = [[] for i in range(len(old_numbers_sort_str))]
             # print(old_numbers_sort_str)
             for i in range(len(old_numbers_sort_str)):
-                while old_numbers_sort_str[i][0] == ' ':
+                while old_numbers_sort_str[i][0] == " ":
                     old_numbers_sort_str[i] = old_numbers_sort_str[i][1:]
 
-                while old_numbers_sort_str[i][-1] == ' ':
+                while old_numbers_sort_str[i][-1] == " ":
                     old_numbers_sort_str[i] = old_numbers_sort_str[i][:-1]
 
-                while '- ' in old_numbers_sort_str[i]:
-                    old_numbers_sort_str[i] = old_numbers_sort_str[i].replace('- ', '-', 1)
+                while "- " in old_numbers_sort_str[i]:
+                    old_numbers_sort_str[i] = old_numbers_sort_str[i].replace("- ", "-", 1)
 
-                while '  ' in old_numbers_sort_str[i]:
-                    old_numbers_sort_str[i] = old_numbers_sort_str[i].replace('  ', ' ', 1)
+                while "  " in old_numbers_sort_str[i]:
+                    old_numbers_sort_str[i] = old_numbers_sort_str[i].replace("  ", " ", 1)
 
             i = 0
             for number in old_numbers_sort_str:
-                split_num_lst = number.split(' ')
+                split_num_lst = number.split(" ")
+
+                # print(split_num_lst)
+                # print(len(split_num_lst))
+                # print(number)
 
                 if len(split_num_lst) == 2:
-                    if number[0] != '-':
-                        old_numbers_sort_lst[i] = [int(split_num_lst[1].split('/')[0]) +
-                                                   (int(split_num_lst[0]) * int(
-                                                       split_num_lst[1].split('/')[1])),
-                                                   int(split_num_lst[1].split('/')[1]),
-                                                   True]
+                    if number[0] != "-":
+                        old_numbers_sort_lst[i] = [
+                            int(split_num_lst[1].split("/")[0])
+                            + (int(split_num_lst[0]) * int(split_num_lst[1].split("/")[1])),
+                            int(split_num_lst[1].split("/")[1]),
+                            True,
+                        ]
                     else:
-                        old_numbers_sort_lst[i] = [int(split_num_lst[1].split('/')[0]) +
-                                                   (int(split_num_lst[0]) * -1 * int(
-                                                       split_num_lst[1].split('/')[1])),
-                                                   int(split_num_lst[1].split('/')[1]),
-                                                   False]
-                if len(split_num_lst) == 1:
-                    if len(split_num_lst[0].split('/')) == 1:
-                        if number[0] != '-':
-                            old_numbers_sort_lst[i] = [int(number),
-                                                       1,
-                                                       True]
+                        old_numbers_sort_lst[i] = [
+                            int(split_num_lst[1].split("/")[0])
+                            + (
+                                int(split_num_lst[0])
+                                * -1
+                                * int(split_num_lst[1].split("/")[1])
+                            ),
+                            int(split_num_lst[1].split("/")[1]),
+                            False,
+                        ]
+                elif len(split_num_lst) == 1:
+                    if len(split_num_lst[0].split("/")) == 1:
+                        if len(split_num_lst[0].split(".")) == 1:
+                            if number[0] != "-":
+                                old_numbers_sort_lst[i] = [int(number), 1, True]
+                            else:
+                                old_numbers_sort_lst[i] = [int(number) * -1, 1, False]
+                            # print(old_numbers_sort_lst[i], i)
+                        elif len(split_num_lst[0].split(".")) == 2:
+                            if number[0] != "-":
+                                chisl_desut_drob = str(split_num_lst[0]).replace('.', '', 1)
+                                znam_desut_drob = 1
+                                for j in range(len(str(split_num_lst[0].split('.')[1]))):
+                                    znam_desut_drob *= 10
+                                old_numbers_sort_lst[i] = [
+                                    int(chisl_desut_drob),
+                                    int(znam_desut_drob),
+                                    True,
+                                ]
+                            else:
+                                chisl_desut_drob = str(split_num_lst[0]).replace('.', '', 1)
+                                znam_desut_drob = 1
+                                for j in range(len(chisl_desut_drob.replace('-', '', 1))):
+                                    znam_desut_drob *= 10
+                                old_numbers_sort_lst[i] = [
+                                    int(chisl_desut_drob) * -1,
+                                    int(znam_desut_drob),
+                                    False,
+                                ]
+                            # print(old_numbers_sort_lst[i], i)
+                    elif len(split_num_lst[0].split("/")) == 2:
+                        if number[0] != "-":
+                            old_numbers_sort_lst[i] = [
+                                int(number.split("/")[0]),
+                                int(number.split("/")[1]),
+                                True,
+                            ]
                         else:
-                            old_numbers_sort_lst[i] = [int(number) * -1,
-                                                       1,
-                                                       False]
-                    if len(split_num_lst[0].split('/')) == 2:
-                        if number[0] != '-':
-                            old_numbers_sort_lst[i] = [int(number.split('/')[0]),
-                                                       int(number.split('/')[1]),
-                                                       True]
-                        else:
-                            old_numbers_sort_lst[i] = [int(number.split('/')[0]) * -1,
-                                                       int(number.split('/')[1]),
-                                                       False]
-
+                            old_numbers_sort_lst[i] = [
+                                int(number.split("/")[0]) * -1,
+                                int(number.split("/")[1]),
+                                False,
+                            ]
                 i += 1
 
             # print(old_numbers_sort_lst)
@@ -505,119 +730,148 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 multi_znam *= znamenat[1]
 
             for i in range(len(old_numbers_sort_lst)):
-                old_numbers_sort_lst[i][0] *= (multi_znam // old_numbers_sort_lst[i][1])
-                old_numbers_sort_lst[i][1] *= (multi_znam // old_numbers_sort_lst[i][1])
+                old_numbers_sort_lst[i][0] *= multi_znam // old_numbers_sort_lst[i][1]
+                old_numbers_sort_lst[i][1] *= multi_znam // old_numbers_sort_lst[i][1]
                 if not old_numbers_sort_lst[i][2]:
                     old_numbers_sort_lst[i][0] *= -1
 
             for j in range(len(old_numbers_sort_lst) - 1):
                 for i in range(len(old_numbers_sort_lst) - 1):
-                    if how_sort == 'по убыванию':
+                    if how_sort == "по убыванию":
                         if old_numbers_sort_lst[i][0] < old_numbers_sort_lst[i + 1][0]:
-                            old_numbers_sort_lst[i], old_numbers_sort_lst[i + 1] = (old_numbers_sort_lst[i + 1],
-                                                                                    old_numbers_sort_lst[i])
-                            old_numbers_sort_str[i], old_numbers_sort_str[i + 1] = (old_numbers_sort_str[i + 1],
-                                                                                    old_numbers_sort_str[i])
-                    elif how_sort == 'по возрастанию':
+                            old_numbers_sort_lst[i], old_numbers_sort_lst[i + 1] = (
+                                old_numbers_sort_lst[i + 1],
+                                old_numbers_sort_lst[i],
+                            )
+                            old_numbers_sort_str[i], old_numbers_sort_str[i + 1] = (
+                                old_numbers_sort_str[i + 1],
+                                old_numbers_sort_str[i],
+                            )
+                    elif how_sort == "по возрастанию":
                         if old_numbers_sort_lst[i][0] > old_numbers_sort_lst[i + 1][0]:
-                            old_numbers_sort_lst[i], old_numbers_sort_lst[i + 1] = (old_numbers_sort_lst[i + 1],
-                                                                                    old_numbers_sort_lst[i])
-                            old_numbers_sort_str[i], old_numbers_sort_str[i + 1] = (old_numbers_sort_str[i + 1],
-                                                                                    old_numbers_sort_str[i])
+                            old_numbers_sort_lst[i], old_numbers_sort_lst[i + 1] = (
+                                old_numbers_sort_lst[i + 1],
+                                old_numbers_sort_lst[i],
+                            )
+                            old_numbers_sort_str[i], old_numbers_sort_str[i + 1] = (
+                                old_numbers_sort_str[i + 1],
+                                old_numbers_sort_str[i],
+                            )
 
             old_numbers_sort_str_for_print = []
 
             for i in range(len(old_numbers_sort_str) - 1):
-                old_numbers_sort_str_for_print.append(old_numbers_sort_str[i] + ',')
+                old_numbers_sort_str_for_print.append(old_numbers_sort_str[i] + ",")
             old_numbers_sort_str_for_print.append(old_numbers_sort_str[-1])
 
-            text = ' '.join(old_numbers_sort_str_for_print)
+            text = " ".join(old_numbers_sort_str_for_print)
             await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
         except IndexError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error + ' Возможно, вы не правильно ввели числа или дроби.')
-
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text=text_error + " Возможно, вы не правильно ввели числа или дроби.",
+            )
             # print(IndexError)
         except TypeError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(TypeError)
         except ValueError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(ValueError)
         except OverflowError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(OverflowError)
         finally:
-            state[update.effective_user.id]['dia_stat'] = 'sort_1'
+            state[update.effective_user.id]["dia_stat"] = "sort_1"
 
-    if state[update.effective_user.id]['dia_stat'] == 'nod_1':
-        text_error = 'К сожалению, мы не можем обработать эти числа.😢'
+    if state[update.effective_user.id]["dia_stat"] == "nod_1":
+        text_error = "К сожалению, мы не можем обработать эти числа.😢"
         try:
-            numbers_nod = update.effective_message.text.split(' ')
+            numbers_nod = update.effective_message.text.split(" ")
 
-            logger.info(f'/nod {update.effective_user.username} {update.effective_user.id}\n'
-                        f'{numbers_nod}')
+            logger.info(
+                f"/nod {update.effective_user.username} {update.effective_user.id}\n"
+                f"{numbers_nod}"
+            )
 
             if float(numbers_nod[0]) % 1 != 0 or float(numbers_nod[1]) % 1 != 0:
-                await context.bot.send_message(chat_id=update.effective_chat.id,
-                                               text='Введите 2 целых числа')
+                await context.bot.send_message(
+                    chat_id=update.effective_chat.id, text="Введите 2 целых числа"
+                )
                 await nod(update, context)
             else:
                 new_numbers_nod = [int(numbers_nod[0]), int(numbers_nod[1])]
                 max_nod = 0
                 if new_numbers_nod[0] >= 1000000 or new_numbers_nod[1] >= 1000000:
-                    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                                   text='Введите 2 числа поменьше, чтобы не нагружать сервер')
+                    await context.bot.send_message(
+                        chat_id=update.effective_chat.id,
+                        text="Введите 2 числа поменьше, чтобы не нагружать сервер",
+                    )
                     await nod(update, context)
                 else:
                     for i in range(1, min(new_numbers_nod) + 1):
                         if new_numbers_nod[0] % i == 0 and new_numbers_nod[1] % i == 0:
                             max_nod = i
                     # state[update.effective_user.id]['dia_stat'] = 0
-                    await context.bot.send_message(chat_id=update.effective_chat.id, text=max_nod)
+                    await context.bot.send_message(
+                        chat_id=update.effective_chat.id, text=max_nod
+                    )
         except IndexError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(IndexError)
         except TypeError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(TypeError)
         except ValueError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(ValueError)
         except ZeroDivisionError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(ZeroDivisionError)
         except OverflowError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(OverflowError)
         finally:
             pass
 
-    if state[update.effective_user.id]['dia_stat'] == 'nok_1':
-        text_error = 'К сожалению, мы не можем обработать эти числа.😢'
+    if state[update.effective_user.id]["dia_stat"] == "nok_1":
+        text_error = "К сожалению, мы не можем обработать эти числа.😢"
         try:
-            numbers_nok = update.effective_message.text.split(' ')
+            numbers_nok = update.effective_message.text.split(" ")
 
-            logger.info(f'/nok {update.effective_user.username} {update.effective_user.id}\n'
-                        f'{numbers_nok}')
+            logger.info(
+                f"/nok {update.effective_user.username} {update.effective_user.id}\n"
+                f"{numbers_nok}"
+            )
 
             if float(numbers_nok[0]) % 1 != 0 or float(numbers_nok[1]) % 1 != 0:
-                await context.bot.send_message(chat_id=update.effective_chat.id,
-                                               text='Введите 2 целых числа')
+                await context.bot.send_message(
+                    chat_id=update.effective_chat.id, text="Введите 2 целых числа"
+                )
                 await nok(update, context)
             else:
                 new_numbers_nok = [int(numbers_nok[0]), int(numbers_nok[1])]
                 if new_numbers_nok[0] > 1000 or new_numbers_nok[1] > 1000:
-                    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                                   text='Введите 2 числа поменьше, чтобы не нагружать сервер')
+                    await context.bot.send_message(
+                        chat_id=update.effective_chat.id,
+                        text="Введите 2 числа поменьше, чтобы не нагружать сервер",
+                    )
                     await nok(update, context)
                 else:
                     min_nok = 0
@@ -639,52 +893,67 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                         first_lst.append(first_number)
                         second_lst.append(second_number)
                     # state[update.effective_user.id]['dia_stat'] = 0
-                    await context.bot.send_message(chat_id=update.effective_chat.id, text=min_nok)
+                    await context.bot.send_message(
+                        chat_id=update.effective_chat.id, text=min_nok
+                    )
         except IndexError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(IndexError)
         except TypeError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(TypeError)
         except ValueError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(ValueError)
         except ZeroDivisionError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(ZeroDivisionError)
         except OverflowError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(OverflowError)
         finally:
             pass
 
-    if state[update.effective_user.id]['dia_stat'] == 1:
-        text_error = 'К сожалению, мы не можем обработать эти числа.😢'
+    if state[update.effective_user.id]["dia_stat"] == 1:
+        text_error = "К сожалению, мы не можем обработать эти числа.😢"
         try:
             # error()
             # Ввод
-            lst = update.effective_message.text.split(' ')
+            lst = update.effective_message.text.split(" ")
 
-            logger.info(f'/calculations {update.effective_user.username} {update.effective_user.id}\n'
-                        f'{lst}')
+            logger.info(
+                f"/calculations {update.effective_user.username} {update.effective_user.id}\n"
+                f"{lst}"
+            )
 
             if len(lst) // 2 + 1 >= 200:
                 raise IndexError
-            state[update.effective_user.id]['count_numbers'] = (1 + lst.count('-') + lst.count('+') + lst.count('/') +
-                                                                lst.count(':') + lst.count('*'))
+            state[update.effective_user.id]["count_numbers"] = (
+                1
+                + lst.count("-")
+                + lst.count("+")
+                + lst.count("/")
+                + lst.count(":")
+                + lst.count("*")
+            )
             numbers_lst = []
             for i in range(len(lst)):
-                if lst[i] not in ['+', '-', '/', ':', '*']:
+                if lst[i] not in ["+", "-", "/", ":", "*"]:
                     numbers_lst.append(lst[i])
 
             actions_lst = []
             for i in range(len(lst)):
-                if lst[i] in ['+', '-', '/', ':', '*']:
+                if lst[i] in ["+", "-", "/", ":", "*"]:
                     actions_lst.append(lst[i])
                 else:
                     actions_lst.append(None)
@@ -719,25 +988,38 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     if znam(new_numbers_lst[i][j]):
                         int_numbers_lst[i].append(new_numbers_lst[i][j])
                     else:
-                        int_numbers_lst[i].append(new_numbers_lst[i][j].split('/')[0])
-                        int_numbers_lst[i].append(new_numbers_lst[i][j].split('/')[1])
+                        int_numbers_lst[i].append(new_numbers_lst[i][j].split("/")[0])
+                        int_numbers_lst[i].append(new_numbers_lst[i][j].split("/")[1])
 
             for i in range(len(new_numbers_lst)):
                 if len(int_numbers_lst[i]) == 3:
-                    calc_numbers_lst[i] = [int_numbers_lst[i][0], int_numbers_lst[i][1], int_numbers_lst[i][2], '']
+                    calc_numbers_lst[i] = [
+                        int_numbers_lst[i][0],
+                        int_numbers_lst[i][1],
+                        int_numbers_lst[i][2],
+                        "",
+                    ]
                 elif len(int_numbers_lst[i]) == 1:
-                    if not len(int_numbers_lst[i][0].split('.')) == 2:
-                        calc_numbers_lst[i] = [int_numbers_lst[i][0], '0', '1', '']
+                    if not len(int_numbers_lst[i][0].split(".")) == 2:
+                        calc_numbers_lst[i] = [int_numbers_lst[i][0], "0", "1", ""]
                     else:
                         decimal_part = 1
-                        for j in range(len(str(int_numbers_lst[i][0].split('.')[1]))):
+                        for j in range(len(str(int_numbers_lst[i][0].split(".")[1]))):
                             decimal_part *= 10
-                        calc_numbers_lst[i] = [int_numbers_lst[i][0].split('.')[0],
-                                               int_numbers_lst[i][0].split('.')[1],
-                                               str(decimal_part), '']
+                        calc_numbers_lst[i] = [
+                            int_numbers_lst[i][0].split(".")[0],
+                            int_numbers_lst[i][0].split(".")[1],
+                            str(decimal_part),
+                            "",
+                        ]
                 elif len(int_numbers_lst[i]) == 2:
-                    calc_numbers_lst[i] = ['0', int_numbers_lst[i][0], int_numbers_lst[i][1], '']
-                if calc_numbers_lst[i][0][0] == '-' or calc_numbers_lst[i][1][0] == '-':
+                    calc_numbers_lst[i] = [
+                        "0",
+                        int_numbers_lst[i][0],
+                        int_numbers_lst[i][1],
+                        "",
+                    ]
+                if calc_numbers_lst[i][0][0] == "-" or calc_numbers_lst[i][1][0] == "-":
                     calc_numbers_lst[i][3] = False
                 else:
                     calc_numbers_lst[i][3] = True
@@ -751,26 +1033,36 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
             # print(int_numbers_lst, 'int_numbers_lst')
             for i in range(len(calc_numbers_lst)):
                 calc_number = calc_numbers_lst[i]
-                while calc_number[0][0] == '(':
+                while calc_number[0][0] == "(":
                     left_brokes += 1
-                    calc_number[0] = calc_number[0].replace('(', '', 1)
-                    brokes[i].append('(')
-                while calc_number[1][0] == '(':
+                    calc_number[0] = calc_number[0].replace("(", "", 1)
+                    brokes[i].append("(")
+                while calc_number[1][0] == "(":
                     left_brokes += 1
-                    calc_number[1] = calc_number[1].replace('(', '', 1)
-                    brokes[i].append('(')
-                while calc_number[2][-1] == ')':
+                    calc_number[1] = calc_number[1].replace("(", "", 1)
+                    brokes[i].append("(")
+                while calc_number[2][-1] == ")":
                     right_brokes += 1
-                    calc_number[2] = calc_number[2].replace(')', '', 1)
-                    brokes[i].append(')')
-                while calc_number[0][-1] == ')':
+                    calc_number[2] = calc_number[2].replace(")", "", 1)
+                    brokes[i].append(")")
+                while calc_number[0][-1] == ")":
                     right_brokes += 1
-                    calc_number[0] = calc_number[0].replace(')', '', 1)
-                    brokes[i].append(')')
-                if '-' in [calc_number[0][0], calc_number[1][0]]:
-                    calc_numbers_lst[i] = [calc_number[0], calc_number[1], calc_number[2], False]
+                    calc_number[0] = calc_number[0].replace(")", "", 1)
+                    brokes[i].append(")")
+                if "-" in [calc_number[0][0], calc_number[1][0]]:
+                    calc_numbers_lst[i] = [
+                        calc_number[0],
+                        calc_number[1],
+                        calc_number[2],
+                        False,
+                    ]
                 else:
-                    calc_numbers_lst[i] = [calc_number[0], calc_number[1], calc_number[2], True]
+                    calc_numbers_lst[i] = [
+                        calc_number[0],
+                        calc_number[1],
+                        calc_number[2],
+                        True,
+                    ]
             # print(calc_numbers_lst, 'calc_numbers_lst2')
 
             calc_numbers_brokes = []
@@ -785,13 +1077,13 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
             for i in range(len(brokes)):
                 index_brokes = 0
                 for broke_in_broke in brokes[i]:
-                    if broke_in_broke == '(':
+                    if broke_in_broke == "(":
                         max_count_brokes += 1
                         count_brokes = max_count_brokes
                         brokes[i][index_brokes] = max_count_brokes
                         count_brokes_problem += 1
                         last_original_numbers_broke.append(max_count_brokes)
-                    elif broke_in_broke == ')':
+                    elif broke_in_broke == ")":
                         while count_brokes in last_previos_numbers_broke:
                             count_brokes -= 1
                         brokes[i][index_brokes] = count_brokes
@@ -805,7 +1097,7 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
             for i in range(len(actions_lst)):
                 if actions_lst[i]:
                     calc_actions.append(actions_lst[i])
-                    if actions_lst[i] in ['*', '/', ':']:
+                    if actions_lst[i] in ["*", "/", ":"]:
                         calc_actions_div_multi.append(p)
                     p += 1
 
@@ -813,15 +1105,27 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 for count_in_brokes in brokes[i]:
                     if count_in_brokes > last_count_brokes:
                         last_count_brokes = count_in_brokes
-                        calc_number = [[int(calc_numbers_lst[i][0]), int(calc_numbers_lst[i][1]),
-                                        int(calc_numbers_lst[i][2]), calc_numbers_lst[i][3]]]
+                        calc_number = [
+                            [
+                                int(calc_numbers_lst[i][0]),
+                                int(calc_numbers_lst[i][1]),
+                                int(calc_numbers_lst[i][2]),
+                                calc_numbers_lst[i][3],
+                            ]
+                        ]
                         calc_index = [i]
                         calc_action_broke = [calc_actions[i]]
                         run = True
                         j = 1
                         while run:
-                            calc_number.append([int(calc_numbers_lst[i + j][0]), int(calc_numbers_lst[i + j][1]),
-                                                int(calc_numbers_lst[i + j][2]), calc_numbers_lst[i + j][3]])
+                            calc_number.append(
+                                [
+                                    int(calc_numbers_lst[i + j][0]),
+                                    int(calc_numbers_lst[i + j][1]),
+                                    int(calc_numbers_lst[i + j][2]),
+                                    calc_numbers_lst[i + j][3],
+                                ]
+                            )
                             calc_index.append(i + j)
                             z = 0
                             while z < len(brokes[i + j]):
@@ -836,8 +1140,12 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                         calc_actions_brokes.append(calc_action_broke)
 
             for i in range(len(calc_numbers_lst)):
-                calc_numbers_lst[i] = [int(calc_numbers_lst[i][0]), int(calc_numbers_lst[i][1]),
-                                       int(calc_numbers_lst[i][2]), calc_numbers_lst[i][3]]
+                calc_numbers_lst[i] = [
+                    int(calc_numbers_lst[i][0]),
+                    int(calc_numbers_lst[i][1]),
+                    int(calc_numbers_lst[i][2]),
+                    calc_numbers_lst[i][3],
+                ]
                 calc_numbers_lst[i] = checking_for_positivity(calc_numbers_lst[i])
 
             # Арифметические действия
@@ -848,14 +1156,18 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
             if not problem:
                 for i in range(len(calc_numbers_lst)):
-                    if (calc_numbers_lst[i][0] >= 1000000000000000000000000000 or
-                            calc_numbers_lst[i][2] >= 100000 or
-                            calc_numbers_lst[i][1] >= 100000):
+                    if (
+                        calc_numbers_lst[i][0] >= 1000000000000000000000000000
+                        or calc_numbers_lst[i][2] >= 100000
+                        or calc_numbers_lst[i][1] >= 100000
+                    ):
                         problem = True
 
             if problem:
-                await context.bot.send_message(chat_id=update.effective_chat.id,
-                                               text='Числитель, знаменатель или целая часть введённых вами чисел слишком большая...')
+                await context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text="Числитель, знаменатель или целая часть введённых вами чисел слишком большая...",
+                )
                 raise IndexError
             else:
                 # Нужно учитывать скобки
@@ -891,14 +1203,15 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 last_index_brokes = []
 
                 for i in range(len(calc_numbers_brokes)):
-
                     replacement = 0
                     count_elements_vstr_many = []
                     number_replacement_many = []
                     index_replacement_many_f = []
                     index_replacement_many_s = []
 
-                    for j in range(len(last_index_brokes)):  # Считаем количество повторений в скобках
+                    for j in range(
+                        len(last_index_brokes)
+                    ):  # Считаем количество повторений в скобках
                         not_replacement = True
                         count_elements_vstr = 0
                         number_replacement = []
@@ -907,25 +1220,36 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                         for q in range(len(last_index_brokes[j])):
                             if last_index_brokes[j][q] in calc_index_brokes[i]:
                                 count_elements_vstr += 1  # Количество повторов
-                                number_replacement.append(calc_index_brokes[i].index(
-                                    last_index_brokes[j][q]))  # Индексы повторяющихся элементов
+                                number_replacement.append(
+                                    calc_index_brokes[i].index(last_index_brokes[j][q])
+                                )  # Индексы повторяющихся элементов
                                 index_replacement_f.append(j)
-                                index_replacement_s.append(calc_index_brokes[i].index(last_index_brokes[j][q]))
+                                index_replacement_s.append(
+                                    calc_index_brokes[i].index(last_index_brokes[j][q])
+                                )
 
                         if count_elements_vstr == len(last_index_brokes[j]):
                             for q in range(len(last_index_brokes)):
-                                if (len(last_index_brokes[j]) < len(last_index_brokes[q]) and last_index_brokes[j][0]
-                                        in last_index_brokes[q]):
+                                if (
+                                    len(last_index_brokes[j])
+                                    < len(last_index_brokes[q])
+                                    and last_index_brokes[j][0] in last_index_brokes[q]
+                                ):
                                     not_replacement = False
                             if not_replacement:
                                 replacement += 1  # Количество повторений в скобках
-                                count_elements_vstr_many.append(count_elements_vstr)  # Список количеств повторов
+                                count_elements_vstr_many.append(
+                                    count_elements_vstr
+                                )  # Список количеств повторов
                                 number_replacement_many.append(
-                                    number_replacement)  # Список индексов повторяющихся элементов
+                                    number_replacement
+                                )  # Список индексов повторяющихся элементов
                                 index_replacement_many_f.append(
-                                    index_replacement_f)  # Список индексов изначальных элементов
+                                    index_replacement_f
+                                )  # Список индексов изначальных элементов
                                 index_replacement_many_s.append(
-                                    index_replacement_s)  # Список индексов заменяющих элементов
+                                    index_replacement_s
+                                )  # Список индексов заменяющих элементов
                                 # print(last_index_brokes[j], calc_index_brokes[i], 'last_index_brokes[j], calc_index_brokes[i]')
                     # print(replacement, 'replacement')
                     # print(count_elements_vstr_many, 'count_elements_vstr_many')
@@ -933,22 +1257,32 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     # print(index_replacement_many_s, 'index_replacement_many_s')
 
                     for j in range(replacement):  # Делаем замены
-
                         num_replace = 0  # Номер замены
                         for q in range(count_elements_vstr_many[j]):
                             # print(calc_numbers_brokes)
                             # print(calc_actions_brokes)
-                            if num_replace == 0:  # Если замена 1, то он заменяет на результат нужной скобки
-                                calc_numbers_brokes[i][index_replacement_many_s[j][q]] = (
-                                    calc_numbers_brokes_results)[index_replacement_many_f[j][q]]
+                            if (
+                                num_replace == 0
+                            ):  # Если замена 1, то он заменяет на результат нужной скобки
+                                calc_numbers_brokes[i][
+                                    index_replacement_many_s[j][q]
+                                ] = (calc_numbers_brokes_results)[
+                                    index_replacement_many_f[j][q]
+                                ]
 
                             else:  # Если замена не 1, то он заменяет на None
-                                calc_numbers_brokes[i][index_replacement_many_s[j][q]] = None
+                                calc_numbers_brokes[i][
+                                    index_replacement_many_s[j][q]
+                                ] = None
                             num_replace += 1
 
                         # Настройка actions
-                        for m in range(len(number_replacement_many[j]) - 1):  # Количество заменяемых элементов - 1
-                            calc_actions_brokes[i][index_replacement_many_s[j][m]] = None
+                        for m in range(
+                            len(number_replacement_many[j]) - 1
+                        ):  # Количество заменяемых элементов - 1
+                            calc_actions_brokes[i][index_replacement_many_s[j][m]] = (
+                                None
+                            )
 
                     new_calc_numbers_brokes = []  # Отчистка от None чисел
                     for m in range(len(calc_numbers_brokes[i])):
@@ -969,16 +1303,18 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     calc_actions_div_multi_broke = []  # Создание calc_actions_div_multi_broke
                     p = 0
                     for symbol in calc_actions_brokes[i]:
-                        if symbol in ['*', '/', ':']:
+                        if symbol in ["*", "/", ":"]:
                             calc_actions_div_multi_broke.append(p)
                         p += 1
 
-                    last_result_broke = arifmetic_operations_div_mult(calc_actions_div_multi_broke,
-                                                                      calc_actions_brokes[i],
-                                                                      calc_numbers_brokes[i])
-                    if last_result_broke[3] == '-':
+                    last_result_broke = arifmetic_operations_div_mult(
+                        calc_actions_div_multi_broke,
+                        calc_actions_brokes[i],
+                        calc_numbers_brokes[i],
+                    )
+                    if last_result_broke[3] == "-":
                         last_result_broke[3] = False
-                    elif last_result_broke[3] == '':
+                    elif last_result_broke[3] == "":
                         last_result_broke[3] = True
                     last_index_brokes.append(calc_index_brokes[i])
                     calc_numbers_brokes_results.append(last_result_broke)
@@ -988,43 +1324,55 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 # result = arifmetic_operations_div_mult(calc_actions_div_multi, calc_actions, calc_numbers_lst)
                 result = calc_numbers_brokes_results[-1]
                 if result[3]:
-                    result[3] = ''
+                    result[3] = ""
                 else:
-                    result[3] = '-'
+                    result[3] = "-"
 
                 if int(result[1]) >= 5000000:
-                    text = f'Мы не можем сократить полученый нами результат, ' \
-                           f'т.к числитель или знаменатель вводных чисел слишком большой.' \
-                           f'Однако мы можем сказать вам не сокращенную дробь. {result[3]}{result[0]} {result[1]}/{result[2]}'
-                    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                                   text=text)
+                    text = (
+                        f"Мы не можем сократить полученый нами результат, "
+                        f"т.к числитель или знаменатель вводных чисел слишком большой."
+                        f"Однако мы можем сказать вам не сокращенную дробь. {result[3]}{result[0]} {result[1]}/{result[2]}"
+                    )
+                    await context.bot.send_message(
+                        chat_id=update.effective_chat.id, text=text
+                    )
                 else:
                     sokr_biggest = sokrashenie_biggest(result[1], result[2])
                     result[1], result[2] = sokr_biggest[0], sokr_biggest[1]
                     if int(result[1]) == 0:
-                        text = f'{result[3]}{result[0]}'
+                        text = f"{result[3]}{result[0]}"
                     else:
-                        text = f'{result[3]}{result[0]} {int(result[1])}/{int(result[2])}'
-                    await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+                        text = (
+                            f"{result[3]}{result[0]} {int(result[1])}/{int(result[2])}"
+                        )
+                    await context.bot.send_message(
+                        chat_id=update.effective_chat.id, text=text
+                    )
         except IndexError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(IndexError)
         except TypeError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(TypeError)
         except ValueError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(ValueError)
         except ZeroDivisionError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(ZeroDivisionError)
         except OverflowError:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=text_error)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text_error
+            )
             # print(OverflowError)
         finally:
             pass
@@ -1033,31 +1381,33 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
 # config_4['token'] calc
 # config_3['token'] test
 
-if __name__ == '__main__':
-    application = ApplicationBuilder().token(config_3['token']).build()
+if __name__ == "__main__":
+    application = ApplicationBuilder().token(config_3["token"]).build()
 
-    start_handler = CommandHandler('start', start)
+    start_handler = CommandHandler("start", start)
     application.add_handler(start_handler)
 
-    calc_handler = CommandHandler('calculations', calc)  # Создаю обработчик команд
+    calc_handler = CommandHandler("calculations", calc)  # Создаю обработчик команд
     application.add_handler(calc_handler)
 
-    a_number_in_a_power_handler = CommandHandler('exponentiation', a_number_in_a_power)
+    a_number_in_a_power_handler = CommandHandler("exponentiation", a_number_in_a_power)
     application.add_handler(a_number_in_a_power_handler)
 
-    nod_handler = CommandHandler('nod', nod)
+    nod_handler = CommandHandler("nod", nod)
     application.add_handler(nod_handler)
 
-    nok_handler = CommandHandler('nok', nok)
+    nok_handler = CommandHandler("nok", nok)
     application.add_handler(nok_handler)
 
-    reduction_of_fractions_handler = CommandHandler('reduction', reduction_of_fractions)
+    reduction_of_fractions_handler = CommandHandler("reduction", reduction_of_fractions)
     application.add_handler(reduction_of_fractions_handler)
 
-    sort_handler = CommandHandler('sort', sort)
+    sort_handler = CommandHandler("sort", sort)
     application.add_handler(sort_handler)
 
-    message_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), message_processing)
+    message_handler = MessageHandler(
+        filters.TEXT & (~filters.COMMAND), message_processing
+    )
     application.add_handler(message_handler)
 
     application.run_polling()

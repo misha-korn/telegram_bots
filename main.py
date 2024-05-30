@@ -1,6 +1,7 @@
 import logging
 import requests
 import sqlite3
+from config import config_3
 from telegram.constants import ParseMode
 from telegram import (
     Update,
@@ -37,6 +38,7 @@ conn.commit()
 # Асинхронная функция, которая запускается по команде /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(context.args)
+    print(int('1.5'))
     if context.args and context.args[0] == "4orange":
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
@@ -258,7 +260,7 @@ async def upper(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if __name__ == "__main__":
     application = (
         ApplicationBuilder()
-        .token("6658273201:AAHuwzqVF7EyHB1WdEp8RJSFMoJgyYHb3c4")
+        .token(config_3['token'])
         .build()
     )
 

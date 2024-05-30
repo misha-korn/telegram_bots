@@ -1,38 +1,42 @@
 import sqlite3
 
+
 def create_bd(path):
     conn = sqlite3.connect(path)
     cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS users(
+    cursor.execute("""CREATE TABLE IF NOT EXISTS users(
                                     id INT PRIMARY KEY,
-                                    name TEXT);''')
+                                    name TEXT);""")
 
-    cursor.execute('''CREATE TABLE IF NOT EXISTS payments(
+    cursor.execute("""CREATE TABLE IF NOT EXISTS payments(
                                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                                     user_id INT,
                                     sum INT,
-                                    FOREIGN KEY(user_id) REFERENCES users(id));''')
+                                    FOREIGN KEY(user_id) REFERENCES users(id));""")
 
-    cursor.execute('''CREATE TABLE IF NOT EXISTS abonements(
+    cursor.execute("""CREATE TABLE IF NOT EXISTS abonements(
                                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                                     user_id INT,
                                     pay_id INT,
                                     count_lessons INT,
+                                    visit_lessons INT DEFAULT 0,
+                                    status INT DEFAULT 1,
                                     FOREIGN KEY(user_id) REFERENCES users(id),
-                                    FOREIGN KEY(pay_id) REFERENCES payments(id));''')
+                                    FOREIGN KEY(pay_id) REFERENCES payments(id));""")
 
-    cursor.execute('''CREATE TABLE IF NOT EXISTS  lessons(
+    cursor.execute("""CREATE TABLE IF NOT EXISTS  lessons(
                                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                    date_lessons DATE);''')
+                                    date_lessons DATE);""")
 
-    cursor.execute('''CREATE TABLE IF NOT EXISTS lessons_info(
+    cursor.execute("""CREATE TABLE IF NOT EXISTS lessons_info(
                                     ab_id INT,
                                     les_id INT,
                                     PRIMARY KEY (ab_id, les_id),
                                     FOREIGN KEY(ab_id) REFERENCES abonement(id),
-                                    FOREIGN KEY(les_id) REFERENCES lessons(id))''')
+                                    FOREIGN KEY(les_id) REFERENCES lessons(id))""")
     conn.commit()
     conn.close()
+
 
 # cursor.execute(f'INSERT INTO users VALUES(12421, "Misha")')
 # cursor.execute(f'INSERT INTO users VALUES(123, "Vova")')
@@ -52,7 +56,6 @@ def create_bd(path):
 # print(cursor.fetchone())
 # conn.commit()
 # print(cursor.execute('SELECT * FROM payments WHERE sum = 6000 AND user_id = 12421').fetchall())
-
 
 
 # print(cursor.execute(f'''SELECT abonements.id

@@ -64,30 +64,19 @@ day_of_week = {
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(context.args)
     if context.args:
+        await context.bot.delete_message(
+            chat_id=update.effective_chat.id,
+            message_id=update.effective_message.message_id,
+        )
+        id_les = int(context.args[0].split("_")[-1])
+        await sign(update, id_les)
+    else:
+        reply_markup = InlineKeyboardMarkup(keyboard_start)
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"->{context.args}",
+            text="Вы попали на шахматный кружок!",
+            reply_markup=reply_markup,
         )
-    reply_markup = InlineKeyboardMarkup(keyboard_start)
-    await context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text="Вы попали на шахматный кружок!",
-        reply_markup=reply_markup,
-    )
-
-    # context.job_queue.run_repeating(
-    #     hello,
-    #     datetime.timedelta(seconds=30),
-    #     chat_id=update.effective_chat.id,
-    #     data={"name": update.effective_user.full_name},
-    # )
-
-    # context.job_queue.run_repeating(
-    #     hello,
-    #     datetime.timedelta(days=1),
-    #     chat_id=update.effective_chat.id,
-    #     data={"name": update.effective_user.full_name},
-    # )
 
     context.job_queue.run_daily(
         printing,
@@ -106,6 +95,25 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             conn.commit()
     return CHOOSE_ACTION
+
+
+async def sign(update: Update, id_les):
+    with sqlite3.connect("inline_menu_bot_db.sqlite3") as conn:
+        cursor = conn.cursor()
+        abonement_list = cursor.execute(
+            f"SELECT id, visit_lessons, count_lessons FROM abonements WHERE user_id = {update.effective_user.id} and status = 1"
+        ).fetchall()
+        status = 1
+        ab_visit_lesson = abonement_list[0][1] + 1
+        if ab_visit_lesson == abonement_list[0][2]:
+            status = 0
+        cursor.execute(
+            f"UPDATE abonements SET visit_lessons = {ab_visit_lesson}, status={status} WHERE id={abonement_list[0][0]}"
+        )
+        cursor.execute(
+            f"INSERT INTO lessons_info VALUES({abonement_list[0][0]}, {id_les})"
+        )
+        conn.commit()
 
 
 async def hello(context: ContextTypes.DEFAULT_TYPE):
@@ -351,7 +359,7 @@ async def successful_payment_callback(
             update.effective_message.successful_payment.invoice_payload
         )
         cursor.execute(
-            f"INSERT INTO abonements VALUES(NULL, {update.effective_user.id}, {pay_id}, {number_lessons})"
+            f"INSERT INTO abonements (user_id, pay_id, count_lessons) VALUES({update.effective_user.id}, {pay_id}, {number_lessons})"
         )
         conn.commit()
 
@@ -371,7 +379,7 @@ if __name__ == "__main__":
     create_bd("inline_menu_bot_db.sqlite3")
     # created_8_lessons()
     conv_hand = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
+        entry_points=[CommandHandler("start", start, has_args=False)],
         states={
             CHOOSE_ACTION: [
                 CallbackQueryHandler(schedule_cb, pattern=f"^{SCHEDULE}$"),
@@ -392,6 +400,7 @@ if __name__ == "__main__":
                 CallbackQueryHandler(chooseact_cb, pattern=f"^{CHOOSE_ACTION}$"),
             ],
             SIGN: [
+                CommandHandler("start", start, has_args=True),
                 CallbackQueryHandler(schedule_cb, pattern=f"^{SCHEDULE}$"),
                 CallbackQueryHandler(subscription_cb, pattern=f"^{SUBSCRIPTION}$"),
                 CallbackQueryHandler(chooseact_cb, pattern=f"^{CHOOSE_ACTION}$"),
