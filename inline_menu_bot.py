@@ -32,7 +32,9 @@ logging.basicConfig(
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
-# logger.info("Пользователь Алеша")
+
+state = {}
+state["sign_for_lesson"] = 0
 
 PAYMENT_PROVIDER_TOKEN = "381764678:TEST:82184"
 
@@ -63,13 +65,14 @@ day_of_week = {
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(context.args)
+    # created_8_lessons()
     if context.args:
         await context.bot.delete_message(
             chat_id=update.effective_chat.id,
             message_id=update.effective_message.message_id,
         )
         id_les = int(context.args[0].split("_")[-1])
-        await sign(update, id_les)
+        await sign(update, id_les, context)
     else:
         reply_markup = InlineKeyboardMarkup(keyboard_start)
         await context.bot.send_message(
@@ -78,9 +81,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=reply_markup,
         )
 
-    context.job_queue.run_daily(
-        printing,
-        time=datetime.time(hour=12, minute=0, tzinfo=pytz.timezone("Europe/Moscow")),
+    # context.job_queue.run_daily(
+    #     printing,
+    #     time=datetime.time(hour=12, minute=0, tzinfo=pytz.timezone("Europe/Moscow")),
+    #     chat_id=update.effective_chat.id,
+    # )
+
+    context.job_queue.run_repeating(
+        created_2_lessons,
+        interval=datetime.timedelta(days=4),
+        first=datetime.time(hour=12, minute=00, tzinfo=pytz.timezone("Europe/Moscow")),
         chat_id=update.effective_chat.id,
     )
 
@@ -97,14 +107,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return CHOOSE_ACTION
 
 
-async def sign(update: Update, id_les):
+async def sign(update: Update, id_les, context):
     with sqlite3.connect("inline_menu_bot_db.sqlite3") as conn:
         cursor = conn.cursor()
         abonement_list = cursor.execute(
             f"SELECT id, visit_lessons, count_lessons FROM abonements WHERE user_id = {update.effective_user.id} and status = 1"
         ).fetchall()
         status = 1
-        ab_visit_lesson = abonement_list[0][1] + 1
+        try:
+            ab_visit_lesson = abonement_list[0][1] + 1
+        except IndexError:
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text="Вы не можете записаться на урок, не купив абонемент!",
+            )
+            return
         if ab_visit_lesson == abonement_list[0][2]:
             status = 0
         cursor.execute(
@@ -114,6 +131,9 @@ async def sign(update: Update, id_les):
             f"INSERT INTO lessons_info VALUES({abonement_list[0][0]}, {id_les})"
         )
         conn.commit()
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id, text="Вы успешно записались на урок!"
+        )
 
 
 async def hello(context: ContextTypes.DEFAULT_TYPE):
@@ -156,9 +176,28 @@ async def change_page_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def schedule_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    conn = sqlite3.connect("inline_menu_bot_db.sqlite3")
+    cursor = conn.cursor()
+    text = "расписание"
     if not context.user_data.get("num_day"):
         context.user_data["num_day"] = 1
-
+    today_d = datetime.date.today()
+    td = datetime.timedelta(days=7)
+    next_week_d = today_d + td
+    today_d = today_d.strftime("%Y-%m-%d")
+    next_week_d = next_week_d.strftime("%Y-%m-%d")
+    lessons_week = cursor.execute(
+        f'SELECT date_lessons, id FROM lessons WHERE date_lessons >= "{today_d}" and date_lessons <= "{next_week_d}"'
+    ).fetchall()
+    for lesson in lessons_week:
+        num_day = datetime.datetime.strptime(lesson[0], "%Y-%m-%d").date().weekday()
+        if num_day == context.user_data["num_day"] - 1:
+            text = (
+                f"[{lesson[0]}](https://t.me/test_korn_bot?start=sign_les_{lesson[1]})"
+            )
+            break
+        else:
+            text = "На выбранную дату не найдены уроки."
     keyboard = [
         [
             InlineKeyboardButton("◀️", callback_data=str(PREVIOUS)),
@@ -183,7 +222,11 @@ async def schedule_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     # print(context.user_data['num_day'], query.data)
     await query.answer()
-    await query.edit_message_text("расписание", reply_markup=reply_markup)
+    text = text.replace(".", "\.")
+    text = text.replace("-", "\-")
+    await query.edit_message_text(
+        text, reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN_V2
+    )
     return SCHEDULE
 
 
@@ -216,11 +259,11 @@ async def sign_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data_lessons = cursor.execute(
         f'SELECT id, date_lessons FROM lessons WHERE date_lessons >= "{today_d}" and date_lessons <= "{next_month_d}"'
     ).fetchall()
-    await context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text="[Йоу](https://t.me/test_korn_bot?start=4orange)",
-        parse_mode=ParseMode.MARKDOWN_V2,
-    )
+    # await context.bot.send_message(
+    #     chat_id=update.effective_chat.id,
+    #     text="[Йоу](https://t.me/test_korn_bot?start=4orange)",
+    #     parse_mode=ParseMode.MARKDOWN_V2,
+    # )
     for n, lesson in enumerate(data_lessons):
         text_sign = f"{text_sign}\n{n+1}. [{lesson[1]}](https://t.me/test_korn_bot?start=sign_les_{lesson[0]})."
     text_sign = text_sign.replace(".", "\.")
@@ -260,9 +303,25 @@ async def subscription_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     payments = cursor.execute(
         f'SELECT sum FROM payments WHERE user_id = "{update.effective_user.id}"'
     ).fetchall()
-
+    count_visit_lessons = cursor.execute(
+        f'SELECT visit_lessons FROM abonements WHERE user_id = "{update.effective_user.id}"'
+    ).fetchall()
+    if count_visit_lessons:
+        count_visit_lessons = count_visit_lessons[0][0]
+    else:
+        count_visit_lessons = 0
+    count_visit_lessons_copy = count_visit_lessons
+    print(count_visit_lessons)
+    visit_lessons_counter = 0
     for i in range(len(abonements)):
         text_subscription = f"{text_subscription}\n{i+1}. {int(abonements[i][0])} уроков, стоимостью {int(payments[i][0]/100)} рублей."
+        if count_visit_lessons_copy >= int(abonements[i][0]):
+            text_subscription = f"{text_subscription[:-1]} - не действителен."
+            count_visit_lessons_copy -= int(abonements[i][0])
+        else:
+            text_subscription = f"{text_subscription[:-1]} - действителен."
+        visit_lessons_counter += int(abonements[i][0])
+    text_subscription = f"{text_subscription[:-1]}\nУ вас осталось {visit_lessons_counter-count_visit_lessons} абонементов."
 
     if len(abonements) == 0:
         text_subscription = "У вас нет абонементов"
@@ -364,13 +423,32 @@ async def successful_payment_callback(
         conn.commit()
 
 
+def created_2_lessons(context) -> None:
+    conn = sqlite3.connect("inline_menu_bot_db.sqlite3")
+    cursor = conn.cursor()
+    td = datetime.timedelta(days=2)
+    today = datetime.date.today()
+    # 2024-05-20
+    # 2024-05-22
+    # if state["sign_for_lesson"] == 0:
+    for i in range(2):
+        today += td
+        cursor.execute(
+            f'INSERT INTO lessons VALUES(NULL, "{today.strftime("%Y-%m-%d")}") '
+        )
+    conn.commit()
+    # state["sign_for_lesson"] += 1
+    # if state["sign_for_lesson"] > 3:
+    #     state["sign_for_lesson"] = 0
+
+
 def created_8_lessons() -> None:
     conn = sqlite3.connect("inline_menu_bot_db.sqlite3")
     cursor = conn.cursor()
     # 2024-05-20
     # 2024-05-22
     for i in range(8):
-        cursor.execute(f'INSERT INTO lessons VALUES(NULL, "2024-05-{20+(i*2)}") ')
+        cursor.execute(f'INSERT INTO lessons VALUES(NULL, "2024-06-{1+(i*2)}") ')
     conn.commit()
 
 
@@ -388,6 +466,7 @@ if __name__ == "__main__":
                 CallbackQueryHandler(buy_cb, pattern=f"^{BUY}$"),
             ],
             SCHEDULE: [
+                CommandHandler("start", start, has_args=True),
                 CallbackQueryHandler(
                     change_page_cb, pattern=f"^({NEXT}|{PREVIOUS}|{DAY})$"
                 ),

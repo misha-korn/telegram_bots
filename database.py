@@ -18,7 +18,7 @@ def create_bd(path):
                                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                                     user_id INT,
                                     pay_id INT,
-                                    count_lessons INT,
+                                    count_lessons INT DEFAULT 0,
                                     visit_lessons INT DEFAULT 0,
                                     status INT DEFAULT 1,
                                     FOREIGN KEY(user_id) REFERENCES users(id),
