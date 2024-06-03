@@ -1048,28 +1048,19 @@ async def message_processing(update: Update, context: ContextTypes.DEFAULT_TYPE)
         brokes_copy = brokes.copy()
         # print(calc_numbers_lst, 'calc_numbers_lst1')
         # print(int_numbers_lst, 'int_numbers_lst')
+
         for i in range(len(calc_numbers_lst)):
             calc_number = calc_numbers_lst[i]
-            while calc_number[0][0] == "(":
-                left_brokes += 1
-                calc_number[0] = calc_number[0].replace("(", "", 1)
-                brokes[i].append("(")
-            while calc_number[1][0] == "(":
-                left_brokes += 1
-                calc_number[1] = calc_number[1].replace("(", "", 1)
-                brokes[i].append("(")
-            while calc_number[2][-1] == ")":
-                right_brokes += 1
-                calc_number[2] = calc_number[2].replace(")", "", 1)
-                brokes[i].append(")")
-            while calc_number[0][-1] == ")":
-                right_brokes += 1
-                calc_number[0] = calc_number[0].replace(")", "", 1)
-                brokes[i].append(")")
-            while calc_number[1][-1] == ")":
-                right_brokes += 1
-                calc_number[1] = calc_number[1].replace(")", "", 1)
-                brokes[i].append(")")
+            for j in range(len(calc_number)-1):
+                while "(" in calc_number[j]:
+                    left_brokes += 1
+                    calc_number[j] = calc_number[j].replace("(", "", 1)
+                    brokes[i].append("(")
+                while ")" in calc_number[j]:
+                    right_brokes += 1
+                    calc_number[j] = calc_number[j].replace(")", "", 1)
+                    brokes[i].append(")")
+
             if "-" in [calc_number[0][0], calc_number[1][0]]:
                 calc_numbers_lst[i] = [
                     calc_number[0],
