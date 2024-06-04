@@ -15,7 +15,7 @@ from telegram.ext import (
 )
 from database import create_bd
 
-from config import config_3
+from config import config_6
 from templates import keyboard_start
 import json
 import datetime
@@ -453,7 +453,7 @@ def created_8_lessons() -> None:
 
 
 if __name__ == "__main__":
-    application = ApplicationBuilder().token(config_3["token"]).build()
+    application = ApplicationBuilder().token(config_6["token"]).build()
     create_bd("inline_menu_bot_db.sqlite3")
     # created_8_lessons()
     conv_hand = ConversationHandler(
