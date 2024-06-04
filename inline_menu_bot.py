@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 state = {}
 state["sign_for_lesson"] = 0
 
-PAYMENT_PROVIDER_TOKEN = "381764678:TEST:82184"
+PAYMENT_PROVIDER_TOKEN = "381764678:TEST:86788"
 
 (
     BUY_ONE_WEEK,
@@ -73,38 +73,28 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         id_les = int(context.args[0].split("_")[-1])
         await sign(update, id_les, context)
+        if context.args[0][0] == "h":
+            return SCHEDULE
+        else:
+            return SIGN
     else:
+        with sqlite3.connect("inline_menu_bot_db.sqlite3") as conn:
+            cursor = conn.cursor()
+            user_list = cursor.execute(
+                f"SELECT id FROM users WHERE id = {update.effective_user.id}"
+            )
+            if not user_list.fetchone():
+                cursor.execute(
+                    f'INSERT INTO users VALUES({update.effective_user.id}, "{update.effective_user.username}")'
+                )
+                conn.commit()
         reply_markup = InlineKeyboardMarkup(keyboard_start)
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text="Вы попали на шахматный кружок!",
             reply_markup=reply_markup,
         )
-
-    # context.job_queue.run_daily(
-    #     printing,
-    #     time=datetime.time(hour=12, minute=0, tzinfo=pytz.timezone("Europe/Moscow")),
-    #     chat_id=update.effective_chat.id,
-    # )
-
-    context.job_queue.run_repeating(
-        created_2_lessons,
-        interval=datetime.timedelta(days=4),
-        first=datetime.time(hour=12, minute=00, tzinfo=pytz.timezone("Europe/Moscow")),
-        chat_id=update.effective_chat.id,
-    )
-
-    with sqlite3.connect("inline_menu_bot_db.sqlite3") as conn:
-        cursor = conn.cursor()
-        user_list = cursor.execute(
-            f"SELECT id FROM users WHERE id = {update.effective_user.id}"
-        )
-        if not user_list.fetchone():
-            cursor.execute(
-                f'INSERT INTO users VALUES({update.effective_user.id}, "{update.effective_user.username}")'
-            )
-            conn.commit()
-    return CHOOSE_ACTION
+        return CHOOSE_ACTION
 
 
 async def sign(update: Update, id_les, context):
@@ -192,9 +182,7 @@ async def schedule_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for lesson in lessons_week:
         num_day = datetime.datetime.strptime(lesson[0], "%Y-%m-%d").date().weekday()
         if num_day == context.user_data["num_day"] - 1:
-            text = (
-                f"[{lesson[0]}](https://t.me/test_korn_bot?start=sign_les_{lesson[1]})"
-            )
+            text = f"[{lesson[0]}](https://t.me/inline_chess_bot?start=hsign_les_{lesson[1]})"
             break
         else:
             text = "На выбранную дату не найдены уроки."
@@ -265,7 +253,7 @@ async def sign_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     #     parse_mode=ParseMode.MARKDOWN_V2,
     # )
     for n, lesson in enumerate(data_lessons):
-        text_sign = f"{text_sign}\n{n+1}. [{lesson[1]}](https://t.me/test_korn_bot?start=sign_les_{lesson[0]})."
+        text_sign = f"{text_sign}\n{n+1}. [{lesson[1]}](https://t.me/inline_chess_bot?start=sign_les_{lesson[0]})."
     text_sign = text_sign.replace(".", "\.")
     text_sign = text_sign.replace("-", "\-")
     if len(data_lessons) == 0:
@@ -426,6 +414,7 @@ async def successful_payment_callback(
 def created_2_lessons(context) -> None:
     conn = sqlite3.connect("inline_menu_bot_db.sqlite3")
     cursor = conn.cursor()
+
     td = datetime.timedelta(days=2)
     today = datetime.date.today()
     # 2024-05-20
@@ -437,6 +426,7 @@ def created_2_lessons(context) -> None:
             f'INSERT INTO lessons VALUES(NULL, "{today.strftime("%Y-%m-%d")}") '
         )
     conn.commit()
+    conn.close()
     # state["sign_for_lesson"] += 1
     # if state["sign_for_lesson"] > 3:
     #     state["sign_for_lesson"] = 0
@@ -496,7 +486,7 @@ if __name__ == "__main__":
                 ),
             ],
         },
-        fallbacks=[],
+        fallbacks=[CommandHandler("start", start, has_args=False)],
     )
 
     application.add_handler(conv_hand)
@@ -505,6 +495,20 @@ if __name__ == "__main__":
 
     application.add_handler(
         MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback)
+    )
+
+    conn = sqlite3.connect("inline_menu_bot_db.sqlite3")
+    cursor = conn.cursor()
+    if len(cursor.execute(f"SELECT * FROM lessons").fetchall()) == 0:
+        created_2_lessons(4)
+        conn.commit()
+    conn.close()
+
+    application.job_queue.run_repeating(
+        created_2_lessons,
+        interval=datetime.timedelta(days=4),
+        #     first=datetime.time(hour=12, minute=00, tzinfo=pytz.timezone("Europe/Moscow")),
+        first=datetime.timedelta(days=4),
     )
 
     application.run_polling()
